@@ -47,6 +47,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 export interface TourFiltersProps {
@@ -54,6 +55,20 @@ export interface TourFiltersProps {
   areas: AreaCode[];
   /** 추가 클래스명 */
   className?: string;
+}
+
+/**
+ * 활성 필터 정보 타입
+ */
+interface ActiveFilter {
+  /** 필터 키 ('areaCode', 'contentTypeId', 'sort', 'petFriendly') */
+  key: string;
+  /** 표시할 레이블 */
+  label: string;
+  /** 필터 값 */
+  value: string;
+  /** 사용자에게 표시할 값 */
+  displayValue: string;
 }
 
 /**
@@ -99,6 +114,83 @@ export function TourFilters({ areas, className }: TourFiltersProps) {
   };
 
   const activeFilterCount = getActiveFilterCount();
+
+  /**
+   * 활성 필터 정보 추출 함수
+   */
+  const getActiveFilters = (): ActiveFilter[] => {
+    const filters: ActiveFilter[] = [];
+
+    // 지역 필터: 기본값("1")과 다르면 추가
+    if (currentAreaCode !== '1') {
+      const area = areas.find((a) => a.code === currentAreaCode);
+      filters.push({
+        key: 'areaCode',
+        label: '지역',
+        value: currentAreaCode,
+        displayValue: area?.name || '알 수 없음',
+      });
+    }
+
+    // 관광 타입 필터: 선택되면 추가
+    if (currentContentTypeId) {
+      const type = CONTENT_TYPES.find((t) => t.id === currentContentTypeId);
+      filters.push({
+        key: 'contentTypeId',
+        label: '관광 타입',
+        value: currentContentTypeId,
+        displayValue: type?.label || '알 수 없음',
+      });
+    }
+
+    // 정렬 필터: 기본값("latest")과 다르면 추가
+    if (currentSort !== 'latest') {
+      filters.push({
+        key: 'sort',
+        label: '정렬',
+        value: currentSort,
+        displayValue: currentSort === 'name' ? '이름순' : '최신순',
+      });
+    }
+
+    // 반려동물 필터: 활성화되면 추가
+    if (currentPetFriendly) {
+      filters.push({
+        key: 'petFriendly',
+        label: '반려동물',
+        value: 'true',
+        displayValue: '동반 가능',
+      });
+    }
+
+    return filters;
+  };
+
+  const activeFilters = getActiveFilters();
+
+  /**
+   * 개별 필터 제거 핸들러
+   */
+  const handleRemoveFilter = (filterKey: string) => {
+    const updates: Record<string, string | null> = {};
+
+    switch (filterKey) {
+      case 'areaCode':
+        updates.areaCode = null; // 기본값으로 리셋
+        break;
+      case 'contentTypeId':
+        updates.contentTypeId = null;
+        break;
+      case 'sort':
+        updates.sort = null; // 기본값 'latest'로 리셋
+        break;
+      case 'petFriendly':
+        updates.petFriendly = null;
+        break;
+    }
+
+    updateParams(updates);
+  };
 
   // 모바일/데스크톱 감지
   useEffect(() => {
@@ -205,24 +297,58 @@ export function TourFilters({ areas, className }: TourFiltersProps) {
 
   // 전체 선택 상태 확인
   const isAllSelected = selectedTypeIds.length === CONTENT_TYPES.length;
-  const isSomeSelected = selectedTypeIds.length > 0 && !isAllSelected;
 
   // 필터 컨텐츠 (공통)
   const filterContent = (
-    <div className="flex flex-col md:flex-row gap-4 md:gap-6">
-      {/* 지역 필터 */}
-      <div className="flex flex-col gap-2 flex-1">
-        <label
-          htmlFor="area-filter"
-          className="text-sm font-medium flex items-center gap-2"
-        >
-          <MapPin className="h-4 w-4" aria-hidden="true" />
-          지역
-        </label>
-        <Select value={currentAreaCode} onValueChange={handleAreaChange}>
-          <SelectTrigger id="area-filter" className="w-full" aria-label="지역 선택">
-            <SelectValue placeholder="지역 선택" />
-          </SelectTrigger>
+    <div className="space-y-4">
+      {/* 활성 필터 뱃지 섹션 */}
+      {activeFilters.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {activeFilters.map((filter) => (
+            <Badge
+              key={filter.key}
+              variant="secondary"
+              className="flex items-center gap-1 pr-1"
+            >
+              <span className="text-xs">
+                {filter.label}: {filter.displayValue}
+              </span>
+              <button
+                onClick={() => handleRemoveFilter(filter.key)}
+                className="ml-1 hover:bg-destructive/20 rounded-full p-0.5 transition-colors"
+                aria-label={`${filter.label} 필터 제거`}
+                type="button"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      )}
+
+      {/* 필터 컨트롤 */}
+      <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+        {/* 지역 필터 */}
+        <div className="flex flex-col gap-2 flex-1">
+          <label
+            htmlFor="area-filter"
+            className="text-sm font-medium flex items-center gap-2"
+          >
+            <MapPin className="h-4 w-4" aria-hidden="true" />
+            지역
+          </label>
+          <Select value={currentAreaCode} onValueChange={handleAreaChange}>
+            <SelectTrigger
+              id="area-filter"
+              className={cn(
+                'w-full',
+                currentAreaCode !== '1' &&
+                  'border-primary bg-primary/5 dark:bg-primary/10',
+              )}
+              aria-label="지역 선택"
+            >
+              <SelectValue placeholder="지역 선택" />
+            </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">전체</SelectItem>
             {areas.map((area) => (
@@ -294,7 +420,15 @@ export function TourFilters({ areas, className }: TourFiltersProps) {
           정렬
         </label>
         <Select value={currentSort} onValueChange={handleSortChange}>
-          <SelectTrigger id="sort-filter" className="w-full" aria-label="정렬 선택">
+          <SelectTrigger
+            id="sort-filter"
+            className={cn(
+              'w-full',
+              currentSort !== 'latest' &&
+                'border-primary bg-primary/5 dark:bg-primary/10',
+            )}
+            aria-label="정렬 선택"
+          >
             <SelectValue placeholder="정렬 선택" />
           </SelectTrigger>
           <SelectContent>
@@ -313,7 +447,13 @@ export function TourFilters({ areas, className }: TourFiltersProps) {
           <Heart className="h-4 w-4" aria-hidden="true" />
           반려동물
         </label>
-        <div className="flex items-center gap-3 p-3 border rounded-md bg-card">
+        <div
+          className={cn(
+            'flex items-center gap-3 p-3 border rounded-md bg-card transition-colors',
+            currentPetFriendly &&
+              'border-primary bg-primary/5 dark:bg-primary/10',
+          )}
+        >
           <Switch
             id="pet-friendly-filter"
             checked={currentPetFriendly}
@@ -343,6 +483,7 @@ export function TourFilters({ areas, className }: TourFiltersProps) {
           리셋
         </Button>
       </div>
+      </div>
     </div>
   );
 
@@ -353,6 +494,13 @@ export function TourFilters({ areas, className }: TourFiltersProps) {
         className,
       )}
     >
+      {/* 데스크톱 필터 요약 정보 */}
+      {!isMobile && activeFilterCount > 0 && (
+        <div className="mb-4 text-sm text-muted-foreground">
+          {activeFilterCount}개 필터 적용 중
+        </div>
+      )}
+
       {isMobile ? (
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
           <CollapsibleTrigger asChild>

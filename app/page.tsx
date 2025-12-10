@@ -76,7 +76,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   // 관광지 데이터 가져오기
   let tours: TourItem[] = [];
-  let petInfoMap: Map<string, PetTourInfo | null> = new Map();
+  const petInfoMap: Map<string, PetTourInfo | null> = new Map();
   let error: Error | null = null;
 
   try {

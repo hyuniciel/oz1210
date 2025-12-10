@@ -107,7 +107,7 @@ function buildQueryParams(
     serviceKey,
     ...Object.fromEntries(
       Object.entries(customParams)
-        .filter(([_, value]) => value !== undefined && value !== null)
+        .filter(([, value]) => value !== undefined && value !== null)
         .map(([key, value]) => [key, String(value)]),
     ),
   });

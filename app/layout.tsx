@@ -90,9 +90,9 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider
+      localization={customKoKR}
       appearance={{
         cssLayerName: "clerk", // Tailwind CSS 4 호환성
-        localization: customKoKR, // 한국어 로컬라이제이션 (커스텀 에러 메시지 포함)
       }}
     >
       <html lang="ko">
