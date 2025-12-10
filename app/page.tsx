@@ -22,9 +22,14 @@
  */
 
 import type { Metadata } from 'next';
-import { getAreaBasedList, searchKeyword } from '@/lib/api/tour-api';
+import { Suspense } from 'react';
+import { getAreaCode, getAreaBasedList, searchKeyword, getDetailPetTour } from '@/lib/api/tour-api';
 import { TourList } from '@/components/tour-list';
-import type { TourItem } from '@/lib/types/tour';
+import { TourFilters } from '@/components/tour-filters';
+import { sortTours } from '@/lib/utils/sort';
+import { isPetFriendly } from '@/lib/utils/pet';
+import type { TourItem, PetTourInfo } from '@/lib/types/tour';
+import { Loading } from '@/components/ui/loading';
 
 /**
  * 페이지 메타데이터
@@ -41,7 +46,9 @@ interface HomePageProps {
     keyword?: string;
     areaCode?: string;
     contentTypeId?: string;
+    sort?: string;
     page?: string;
+    petFriendly?: string;
   }>;
 }
 
@@ -55,10 +62,21 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const keyword = params.keyword;
   const areaCode = params.areaCode || '1'; // 기본값: 서울
   const contentTypeId = params.contentTypeId;
+  const sort = params.sort || 'latest'; // 기본값: 최신순
   const page = params.page ? parseInt(params.page, 10) : 1;
+  const petFriendly = params.petFriendly === 'true'; // 반려동물 필터
+
+  // 지역 목록 로드
+  let areas: Awaited<ReturnType<typeof getAreaCode>> = [];
+  try {
+    areas = await getAreaCode({ numOfRows: 100 });
+  } catch (err) {
+    console.error('지역 목록 조회 오류:', err);
+  }
 
   // 관광지 데이터 가져오기
   let tours: TourItem[] = [];
+  let petInfoMap: Map<string, PetTourInfo | null> = new Map();
   let error: Error | null = null;
 
   try {
@@ -82,6 +100,45 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       });
       tours = listResult.items;
     }
+
+    // 반려동물 필터가 활성화된 경우, 각 관광지에 대해 반려동물 정보 조회
+    if (petFriendly && tours.length > 0) {
+      console.log(`[Pet Filter] 반려동물 정보 조회 시작: ${tours.length}개 관광지`);
+      
+      // 병렬로 반려동물 정보 조회 (최대 20개)
+      const petInfoPromises = tours.slice(0, 20).map(async (tour) => {
+        try {
+          const petInfo = await getDetailPetTour({ contentId: tour.contentid });
+          return { contentId: tour.contentid, petInfo };
+        } catch (err) {
+          // 일부 관광지의 반려동물 정보 조회 실패 시에도 계속 진행
+          console.warn(`[Pet Filter] 반려동물 정보 조회 실패 (${tour.contentid}):`, err);
+          return { contentId: tour.contentid, petInfo: null };
+        }
+      });
+
+      const petInfoResults = await Promise.allSettled(petInfoPromises);
+      
+      // 결과를 Map에 저장
+      petInfoResults.forEach((result) => {
+        if (result.status === 'fulfilled') {
+          petInfoMap.set(result.value.contentId, result.value.petInfo);
+        }
+      });
+
+      console.log(`[Pet Filter] 반려동물 정보 조회 완료: ${petInfoMap.size}개`);
+      
+      // 반려동물 동반 가능한 관광지만 필터링
+      tours = tours.filter((tour) => {
+        const petInfo = petInfoMap.get(tour.contentid);
+        return isPetFriendly(petInfo || null);
+      });
+
+      console.log(`[Pet Filter] 필터링 후 관광지 수: ${tours.length}개`);
+    }
+
+    // 정렬 적용 (클라이언트 사이드)
+    tours = sortTours(tours, sort as 'latest' | 'name');
   } catch (err) {
     error = err instanceof Error ? err : new Error('알 수 없는 오류가 발생했습니다.');
     console.error('관광지 목록 조회 오류:', err);
@@ -92,12 +149,16 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       {/* 메인 컨테이너 - 반응형 설정 */}
       <div className="container mx-auto px-4 py-6 md:py-8 lg:py-12 max-w-7xl">
         {/* 필터 섹션 영역 */}
-        {/* TODO: 향후 tour-filters 컴포넌트 배치 */}
         <div className="mb-6 md:mb-8">
-          {/* 필터 컴포넌트가 여기에 배치됩니다 */}
-          <div className="text-sm text-muted-foreground">
-            필터 영역 (향후 구현)
-          </div>
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center p-8">
+                <Loading text="필터 로딩 중..." showText />
+              </div>
+            }
+          >
+            <TourFilters areas={areas} />
+          </Suspense>
         </div>
 
         {/* 메인 콘텐츠 영역 - 데스크톱: 리스트 + 지도 분할, 모바일: 탭 전환 */}
@@ -117,11 +178,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             {/* 관광지 목록 컴포넌트 */}
             <TourList
               tours={tours}
+              petInfoMap={petInfoMap}
               error={error}
               emptyMessage={
-                keyword
-                  ? `"${keyword}"에 대한 검색 결과가 없습니다.`
-                  : '관광지를 찾을 수 없습니다.'
+                petFriendly
+                  ? '반려동물 동반 가능한 관광지를 찾을 수 없습니다.'
+                  : keyword
+                    ? `"${keyword}"에 대한 검색 결과가 없습니다.`
+                    : '관광지를 찾을 수 없습니다.'
               }
             />
           </div>

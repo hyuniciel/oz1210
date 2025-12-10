@@ -24,7 +24,7 @@
  */
 
 import { Search } from 'lucide-react';
-import type { TourItem } from '@/lib/types/tour';
+import type { TourItem, PetTourInfo } from '@/lib/types/tour';
 import { TourCard } from '@/components/tour-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Error } from '@/components/ui/error';
@@ -32,6 +32,8 @@ import { Error } from '@/components/ui/error';
 export interface TourListProps {
   /** 관광지 목록 */
   tours: TourItem[];
+  /** 반려동물 정보 Map (contentId -> PetTourInfo) */
+  petInfoMap?: Map<string, PetTourInfo | null>;
   /** 로딩 상태 */
   isLoading?: boolean;
   /** 에러 상태 */
@@ -89,6 +91,7 @@ function EmptyState({ message }: { message?: string }) {
  */
 export function TourList({
   tours,
+  petInfoMap,
   isLoading = false,
   error = null,
   onRetry,
@@ -119,9 +122,10 @@ export function TourList({
   // 목록 표시
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-      {tours.map((tour) => (
-        <TourCard key={tour.contentid} tour={tour} />
-      ))}
+      {tours.map((tour) => {
+        const petInfo = petInfoMap?.get(tour.contentid) || null;
+        return <TourCard key={tour.contentid} tour={tour} petInfo={petInfo} />;
+      })}
     </div>
   );
 }

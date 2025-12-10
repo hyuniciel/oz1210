@@ -1,0 +1,300 @@
+/**
+ * @file tour-filters.tsx
+ * @description 관광지 필터 컴포넌트
+ *
+ * 지역, 관광 타입, 정렬 옵션을 선택할 수 있는 필터 컴포넌트입니다.
+ * 필터 상태는 URL 쿼리 파라미터로 관리되어 북마크/공유 시에도 유지됩니다.
+ *
+ * 주요 기능:
+ * - 지역 필터 (시/도 선택)
+ * - 관광 타입 필터 (다중 선택)
+ * - 정렬 옵션 (최신순, 이름순)
+ * - 필터 리셋 기능
+ *
+ * 핵심 구현 로직:
+ * - Client Component로 구현하여 필터 인터랙션 처리
+ * - Next.js 15의 useSearchParams와 useRouter 사용
+ * - URL 쿼리 파라미터와 동기화된 상태 관리
+ *
+ * @dependencies
+ * - next/navigation: useSearchParams, useRouter
+ * - components/ui/select: Select 컴포넌트
+ * - components/ui/checkbox: Checkbox 컴포넌트
+ * - components/ui/button: Button 컴포넌트
+ * - lib/constants/content-types: CONTENT_TYPES
+ * - lib/types/tour: AreaCode
+ */
+
+'use client';
+
+import { useRouter, useSearchParams } from 'next/navigation';
+import { MapPin, Tag, ArrowUpDown, X, Heart } from 'lucide-react';
+import type { AreaCode } from '@/lib/types/tour';
+import { CONTENT_TYPES } from '@/lib/constants/content-types';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+
+export interface TourFiltersProps {
+  /** 지역 목록 */
+  areas: AreaCode[];
+  /** 추가 클래스명 */
+  className?: string;
+}
+
+/**
+ * 관광지 필터 컴포넌트
+ */
+export function TourFilters({ areas, className }: TourFiltersProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // 현재 필터 값 읽기
+  const currentAreaCode = searchParams.get('areaCode') || '1'; // 기본값: 서울
+  const currentContentTypeId = searchParams.get('contentTypeId') || '';
+  const currentSort = searchParams.get('sort') || 'latest';
+  const currentPetFriendly = searchParams.get('petFriendly') === 'true';
+  const keyword = searchParams.get('keyword') || '';
+
+  // 관광 타입 필터 상태 (체크박스용)
+  const selectedTypeIds = currentContentTypeId
+    ? [currentContentTypeId]
+    : [];
+
+  /**
+   * URL 파라미터 업데이트 함수
+   */
+  const updateParams = (updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null || value === '' || value === 'all') {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    });
+
+    // 필터 변경 시 page를 1로 리셋
+    params.delete('page');
+
+    router.push(`/?${params.toString()}`);
+  };
+
+  /**
+   * 지역 필터 변경 핸들러
+   */
+  const handleAreaChange = (value: string) => {
+    updateParams({ areaCode: value === 'all' ? null : value });
+  };
+
+  /**
+   * 관광 타입 필터 변경 핸들러
+   */
+  const handleTypeChange = (typeId: string, checked: boolean) => {
+    if (checked) {
+      // 선택: 첫 번째 선택된 타입만 URL에 반영
+      updateParams({ contentTypeId: typeId });
+    } else {
+      // 해제: 파라미터 제거
+      updateParams({ contentTypeId: null });
+    }
+  };
+
+  /**
+   * 전체 선택/해제 핸들러
+   */
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      // 전체 선택: 첫 번째 타입 선택
+      updateParams({ contentTypeId: CONTENT_TYPES[0].id });
+    } else {
+      // 전체 해제
+      updateParams({ contentTypeId: null });
+    }
+  };
+
+  /**
+   * 정렬 옵션 변경 핸들러
+   */
+  const handleSortChange = (value: string) => {
+    updateParams({ sort: value });
+  };
+
+  /**
+   * 반려동물 필터 변경 핸들러
+   */
+  const handlePetFriendlyChange = (checked: boolean) => {
+    updateParams({ petFriendly: checked ? 'true' : null });
+  };
+
+  /**
+   * 필터 리셋 핸들러
+   */
+  const handleReset = () => {
+    const params = new URLSearchParams();
+    // keyword는 유지
+    if (keyword) {
+      params.set('keyword', keyword);
+    }
+    router.push(`/?${params.toString()}`);
+  };
+
+  // 전체 선택 상태 확인
+  const isAllSelected = selectedTypeIds.length === CONTENT_TYPES.length;
+  const isSomeSelected = selectedTypeIds.length > 0 && !isAllSelected;
+
+  return (
+    <div
+      className={cn(
+        'flex flex-col md:flex-row gap-4 md:gap-6',
+        'p-4 md:p-6',
+        'bg-card rounded-lg border',
+        className,
+      )}
+    >
+      {/* 지역 필터 */}
+      <div className="flex flex-col gap-2 flex-1">
+        <label
+          htmlFor="area-filter"
+          className="text-sm font-medium flex items-center gap-2"
+        >
+          <MapPin className="h-4 w-4" aria-hidden="true" />
+          지역
+        </label>
+        <Select value={currentAreaCode} onValueChange={handleAreaChange}>
+          <SelectTrigger id="area-filter" className="w-full" aria-label="지역 선택">
+            <SelectValue placeholder="지역 선택" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">전체</SelectItem>
+            {areas.map((area) => (
+              <SelectItem key={area.code} value={area.code}>
+                {area.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* 관광 타입 필터 */}
+      <div className="flex flex-col gap-2 flex-1">
+        <label
+          htmlFor="type-filter-all"
+          className="text-sm font-medium flex items-center gap-2"
+        >
+          <Tag className="h-4 w-4" aria-hidden="true" />
+          관광 타입
+        </label>
+        <div className="flex flex-col gap-2 max-h-32 overflow-y-auto border rounded-md p-2">
+          {/* 전체 선택 체크박스 */}
+          <div className="flex items-center gap-2 pb-2 border-b">
+            <Checkbox
+              id="select-all"
+              checked={isAllSelected}
+              onCheckedChange={(checked) =>
+                handleSelectAll(checked === true)
+              }
+            />
+            <label
+              htmlFor="select-all"
+              className="text-sm cursor-pointer select-none"
+            >
+              전체 선택
+            </label>
+          </div>
+          {/* 개별 타입 체크박스 */}
+          {CONTENT_TYPES.map((type) => {
+            const isChecked = selectedTypeIds.includes(type.id);
+            return (
+              <div key={type.id} className="flex items-center gap-2">
+                <Checkbox
+                  id={`type-${type.id}`}
+                  checked={isChecked}
+                  onCheckedChange={(checked) =>
+                    handleTypeChange(type.id, checked === true)
+                  }
+                />
+                <label
+                  htmlFor={`type-${type.id}`}
+                  className="text-sm cursor-pointer select-none"
+                >
+                  {type.label}
+                </label>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 정렬 옵션 */}
+      <div className="flex flex-col gap-2 flex-1">
+        <label
+          htmlFor="sort-filter"
+          className="text-sm font-medium flex items-center gap-2"
+        >
+          <ArrowUpDown className="h-4 w-4" aria-hidden="true" />
+          정렬
+        </label>
+        <Select value={currentSort} onValueChange={handleSortChange}>
+          <SelectTrigger id="sort-filter" className="w-full" aria-label="정렬 선택">
+            <SelectValue placeholder="정렬 선택" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="latest">최신순</SelectItem>
+            <SelectItem value="name">이름순</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* 반려동물 동반 가능 필터 */}
+      <div className="flex flex-col gap-2 flex-1">
+        <label
+          htmlFor="pet-friendly-filter"
+          className="text-sm font-medium flex items-center gap-2"
+        >
+          <Heart className="h-4 w-4" aria-hidden="true" />
+          반려동물
+        </label>
+        <div className="flex items-center gap-3 p-3 border rounded-md bg-card">
+          <Switch
+            id="pet-friendly-filter"
+            checked={currentPetFriendly}
+            onCheckedChange={handlePetFriendlyChange}
+            aria-label="반려동물 동반 가능 필터"
+          />
+          <label
+            htmlFor="pet-friendly-filter"
+            className="text-sm cursor-pointer select-none flex items-center gap-1"
+          >
+            <span>🐾</span>
+            <span>동반 가능</span>
+          </label>
+        </div>
+      </div>
+
+      {/* 필터 리셋 버튼 */}
+      <div className="flex items-end">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleReset}
+          className="w-full md:w-auto"
+          aria-label="필터 리셋"
+        >
+          <X className="h-4 w-4 mr-2" aria-hidden="true" />
+          리셋
+        </Button>
+      </div>
+    </div>
+  );
+}
+

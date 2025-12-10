@@ -27,13 +27,16 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { MapPin, Phone } from 'lucide-react';
-import type { TourItem } from '@/lib/types/tour';
-import { getContentTypeInfo, formatAddress, truncateText, stripHtmlTags } from '@/lib/utils/tour';
+import type { TourItem, PetTourInfo } from '@/lib/types/tour';
+import { getContentTypeInfo, formatAddress } from '@/lib/utils/tour';
+import { isPetFriendly, getPetInfoSummary } from '@/lib/utils/pet';
 import { cn } from '@/lib/utils';
 
 export interface TourCardProps {
   /** 관광지 정보 */
   tour: TourItem;
+  /** 반려동물 정보 (선택 사항) */
+  petInfo?: PetTourInfo | null;
   /** 추가 클래스명 */
   className?: string;
 }
@@ -41,13 +44,17 @@ export interface TourCardProps {
 /**
  * 관광지 카드 컴포넌트
  */
-export function TourCard({ tour, className }: TourCardProps) {
+export function TourCard({ tour, petInfo, className }: TourCardProps) {
   const { name: typeName, colorClass } = getContentTypeInfo(tour.contenttypeid);
   const address = formatAddress(tour.addr1, tour.addr2);
   // overview는 상세 정보 API에서만 제공되므로 목록에서는 표시하지 않음
 
   // 이미지 URL 결정 (firstimage2 우선, 없으면 firstimage, 없으면 기본 이미지)
   const imageUrl = tour.firstimage2 || tour.firstimage || '/placeholder-tour.jpg';
+
+  // 반려동물 동반 가능 여부 확인
+  const isPet = isPetFriendly(petInfo);
+  const petSummary = isPet ? getPetInfoSummary(petInfo) : '';
 
   return (
     <Link
@@ -74,8 +81,9 @@ export function TourCard({ tour, className }: TourCardProps) {
           sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
           loading="lazy"
         />
-        {/* 관광 타입 뱃지 (이미지 위에 오버레이) */}
-        <div className="absolute top-2 right-2">
+        {/* 관광 타입 뱃지 및 반려동물 뱃지 (이미지 위에 오버레이) */}
+        <div className="absolute top-2 right-2 flex flex-col gap-2 items-end">
+          {/* 관광 타입 뱃지 */}
           <span
             className={cn(
               'px-2 py-1 rounded-full text-xs font-medium',
@@ -84,6 +92,22 @@ export function TourCard({ tour, className }: TourCardProps) {
           >
             {typeName}
           </span>
+          {/* 반려동물 동반 가능 뱃지 */}
+          {isPet && (
+            <span
+              className={cn(
+                'px-2 py-1 rounded-full text-xs font-medium',
+                'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+                'flex items-center gap-1',
+              )}
+              title={petSummary || '반려동물 동반 가능'}
+            >
+              <span>🐾</span>
+              {petSummary && (
+                <span className="hidden sm:inline">{petSummary.split(',')[0]}</span>
+              )}
+            </span>
+          )}
         </div>
       </div>
 
