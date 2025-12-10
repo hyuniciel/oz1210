@@ -84,12 +84,12 @@ export default function Navbar() {
           {/* 데스크톱 인증 버튼 */}
           <div className="hidden md:flex items-center gap-2">
             <SignedOut>
-              <SignInButton mode="redirect" redirectUrl="/sign-in">
+              <SignInButton mode="redirect" asChild>
                 <Button variant="ghost" size="sm">
                   로그인
                 </Button>
               </SignInButton>
-              <SignUpButton mode="redirect" redirectUrl="/sign-up">
+              <SignUpButton mode="redirect" asChild>
                 <Button size="sm">회원가입</Button>
               </SignUpButton>
             </SignedOut>
@@ -161,12 +161,12 @@ export default function Navbar() {
             {/* 모바일 인증 버튼 */}
             <div className="flex flex-col gap-2 px-2 pt-2 border-t">
               <SignedOut>
-                <SignInButton mode="redirect" redirectUrl="/sign-in">
+                <SignInButton mode="redirect" asChild>
                   <Button variant="ghost" className="w-full justify-start">
                     로그인
                   </Button>
                 </SignInButton>
-                <SignUpButton mode="redirect" redirectUrl="/sign-up">
+                <SignUpButton mode="redirect" asChild>
                   <Button className="w-full">회원가입</Button>
                 </SignUpButton>
               </SignedOut>
