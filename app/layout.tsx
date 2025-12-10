@@ -4,7 +4,9 @@ import { koKR } from "@clerk/localizations";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import { SyncUserProvider } from "@/components/providers/sync-user-provider";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 /**
@@ -46,8 +48,39 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SaaS 템플릿",
-  description: "Next.js + Clerk + Supabase 보일러플레이트",
+  title: {
+    default: "My Trip - 한국 관광지 정보 서비스",
+    template: "%s | My Trip",
+  },
+  description: "전국 관광지 정보를 검색하고 지도에서 확인하세요",
+  keywords: ["관광지", "여행", "한국", "지도", "관광", "여행지"],
+  authors: [{ name: "My Trip" }],
+  openGraph: {
+    type: "website",
+    locale: "ko_KR",
+    url: "https://mytrip.example.com",
+    siteName: "My Trip",
+    title: "My Trip - 한국 관광지 정보 서비스",
+    description: "전국 관광지 정보를 검색하고 지도에서 확인하세요",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "My Trip",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "My Trip - 한국 관광지 정보 서비스",
+    description: "전국 관광지 정보를 검색하고 지도에서 확인하세요",
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
@@ -67,8 +100,12 @@ export default function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
           <SyncUserProvider>
-            <Navbar />
-            {children}
+            <div className="flex min-h-screen flex-col">
+              <Navbar />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </div>
+            <Toaster />
           </SyncUserProvider>
         </body>
       </html>
