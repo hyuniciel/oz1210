@@ -291,26 +291,74 @@ b- [ ] `.cursor/` 디렉토리
       - [x] 모바일: flex-col, gap-4
       - [x] 데스크톱: flex-row, gap-6
       - [x] 필터 레이블 및 컨트롤 크기 조정
-    - [ ] 필터 섹션 접기/펼치기 기능 (모바일)
-      - [ ] Collapsible 컴포넌트 사용 (shadcn/ui 설치 필요)
-      - [ ] 기본 상태: 접힘 (모바일), 펼침 (데스크톱)
-      - [ ] 접기/펼치기 토글 버튼
+    - [x] 필터 섹션 접기/펼치기 기능 (모바일)
+      - [x] Collapsible 컴포넌트 사용 (shadcn/ui 설치 필요)
+      - [x] 기본 상태: 접힘 (모바일), 펼침 (데스크톱)
+      - [x] 접기/펼치기 토글 버튼
       - ---
-      - [ ] 모바일 필터 접기/펼치기 기능 구현
-        - [ ] shadcn/ui Collapsible 컴포넌트 설치
-        - [ ] `components/tour-filters.tsx`에 Collapsible 적용
-          - [ ] 모바일에서만 Collapsible 적용 (데스크톱은 항상 펼침)
-          - [ ] 기본 상태: 모바일에서 접힘, 데스크톱에서 펼침
-          - [ ] 접기/펼치기 토글 버튼 추가 (ChevronDown 아이콘)
-        - [ ] 상태 관리 구현
-          - [ ] `isMobileFilterOpen` 상태 추가
-          - [ ] 모바일/데스크톱 감지 (useEffect 또는 CSS 미디어 쿼리)
-          - [ ] 접기/펼치기 상태를 로컬 상태로 관리
-        - [ ] UI/UX 개선
-          - [ ] 토글 버튼에 "필터" 레이블 및 아이콘 추가
-          - [ ] 접기/펼치기 애니메이션 적용
-          - [ ] 활성 필터 개수 표시 (선택 사항)
-          - [ ] 접근성 개선 (ARIA 속성 추가)
+      - [x] 모바일 필터 접기/펼치기 기능 구현
+        - [x] shadcn/ui Collapsible 컴포넌트 설치
+          - [x] `pnpx shadcn@latest add collapsible` 명령어 실행
+          - [x] `components/ui/collapsible.tsx` 파일 생성 확인
+          - [x] Collapsible 컴포넌트 import 경로 확인
+        - [x] `components/tour-filters.tsx`에 Collapsible 적용
+          - [x] 전체 필터 컨테이너를 Collapsible로 감싸기
+          - [x] CollapsibleTrigger: 토글 버튼 (모바일에서만 표시)
+          - [x] CollapsibleContent: 필터 컨텐츠 (접기/펼치기 대상)
+          - [x] 모바일에서만 Collapsible 적용 (데스크톱은 항상 펼침)
+          - [x] 기본 상태: 모바일에서 접힘, 데스크톱에서 펼침
+        - [x] 상태 관리 구현
+          - [x] `useState`로 `isOpen`, `isMobile` 상태 추가
+          - [x] 기본값: `false` (모바일에서 접힘)
+          - [x] 모바일/데스크톱 감지 로직 구현
+            - [x] `useEffect`와 `window.matchMedia` 사용
+            - [x] 브레이크포인트: 768px (md 브레이크포인트)
+            - [x] 데스크톱 감지 시 `isOpen`을 `true`로 설정
+            - [x] 리사이즈 이벤트 리스너 추가
+            - [x] 컴포넌트 언마운트 시 리스너 제거
+          - [x] 접기/펼치기 상태를 로컬 상태로 관리 (URL 파라미터 불필요)
+        - [x] 토글 버튼 UI 구현
+          - [x] 토글 버튼 디자인 및 레이아웃
+            - [x] 버튼 위치: 필터 섹션 상단 (모바일에서만 표시)
+            - [x] 버튼 스타일: 전체 너비, 배경색, 테두리, 패딩
+            - [x] 왼쪽: Filter 아이콘 + "필터" 텍스트
+            - [x] 오른쪽: ChevronDown 아이콘 (회전 애니메이션)
+          - [x] 아이콘 추가 (ChevronDown, Filter from lucide-react)
+            - [x] 접힘 상태: 아래 방향 화살표
+            - [x] 펼침 상태: 위 방향 화살표 (회전)
+          - [x] 접근성 속성 추가
+            - [x] `aria-label`: "필터 접기/펼치기" (동적)
+            - [x] `aria-expanded`: 접기/펼치기 상태
+            - [x] 키보드 네비게이션 지원 (Enter, Space - Collapsible 자동 지원)
+        - [x] 애니메이션 및 전환 효과
+          - [x] Collapsible 기본 애니메이션 활용
+          - [x] 아이콘 회전 애니메이션 추가 (`transform: rotate(180deg)`)
+          - [x] 전환 시간 조정 (300ms, `duration-300`)
+        - [x] 활성 필터 개수 표시 (선택 사항)
+          - [x] 활성 필터 계산 로직 구현 (`getActiveFilterCount()`)
+            - [x] 지역 필터: 기본값("1")과 다르면 카운트
+            - [x] 관광 타입 필터: 선택되면 카운트
+            - [x] 정렬 필터: 기본값("latest")과 다르면 카운트
+            - [x] 반려동물 필터: 활성화되면 카운트
+          - [x] 토글 버튼에 뱃지 표시 (예: "필터 (3)")
+          - [x] 활성 필터가 없으면 뱃지 숨김
+        - [x] 반응형 동작 구현
+          - [x] 데스크톱 동작 (화면 너비 >= 768px)
+            - [x] 항상 펼쳐진 상태 유지
+            - [x] 토글 버튼 숨김 (`md:hidden`)
+            - [x] Collapsible 기능 비활성화 (조건부 렌더링)
+          - [x] 모바일 동작 (화면 너비 < 768px)
+            - [x] 기본 상태: 접힘
+            - [x] 토글 버튼 표시
+            - [x] Collapsible 기능 활성화
+          - [x] 화면 크기 변경 감지
+            - [x] `window.matchMedia` 리스너 추가
+            - [x] 화면 크기 변경 시 상태 업데이트
+        - [x] 테스트 및 검증
+          - [x] 모바일 환경에서 접기/펼치기 테스트
+          - [x] 데스크톱 환경에서 항상 펼침 확인
+          - [x] 화면 크기 변경 시 동작 확인
+          - [x] 접근성 테스트 (키보드 네비게이션, 스크린 리더)
   - [x] 필터 적용 로직
     - [x] 필터 변경 시 API 재호출
     - [x] 필터 조합 처리

@@ -27,8 +27,9 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { MapPin, Tag, ArrowUpDown, X, Heart } from 'lucide-react';
+import { MapPin, Tag, ArrowUpDown, X, Heart, ChevronDown, Filter } from 'lucide-react';
 import type { AreaCode } from '@/lib/types/tour';
 import { CONTENT_TYPES } from '@/lib/constants/content-types';
 import {
@@ -41,6 +42,11 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 
 export interface TourFiltersProps {
@@ -57,6 +63,10 @@ export function TourFilters({ areas, className }: TourFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // 접기/펼치기 상태 관리
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
   // 현재 필터 값 읽기
   const currentAreaCode = searchParams.get('areaCode') || '1'; // 기본값: 서울
   const currentContentTypeId = searchParams.get('contentTypeId') || '';
@@ -68,6 +78,51 @@ export function TourFilters({ areas, className }: TourFiltersProps) {
   const selectedTypeIds = currentContentTypeId
     ? [currentContentTypeId]
     : [];
+
+  // 활성 필터 개수 계산
+  const getActiveFilterCount = () => {
+    let count = 0;
+
+    // 지역 필터: 기본값("1")과 다르면 카운트
+    if (currentAreaCode !== '1') count++;
+
+    // 관광 타입 필터: 선택되면 카운트
+    if (currentContentTypeId) count++;
+
+    // 정렬 필터: 기본값("latest")과 다르면 카운트
+    if (currentSort !== 'latest') count++;
+
+    // 반려동물 필터: 활성화되면 카운트
+    if (currentPetFriendly) count++;
+
+    return count;
+  };
+
+  const activeFilterCount = getActiveFilterCount();
+
+  // 모바일/데스크톱 감지
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 768px)');
+
+    const handleResize = (e: MediaQueryListEvent | MediaQueryList) => {
+      const isDesktop = e.matches;
+      setIsMobile(!isDesktop);
+      // 데스크톱이면 항상 펼침
+      if (isDesktop) {
+        setIsOpen(true);
+      }
+    };
+
+    // 초기 상태 설정
+    handleResize(mediaQuery);
+
+    // 리사이즈 이벤트 리스너 추가
+    mediaQuery.addEventListener('change', handleResize);
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleResize);
+    };
+  }, []);
 
   /**
    * URL 파라미터 업데이트 함수
@@ -152,15 +207,9 @@ export function TourFilters({ areas, className }: TourFiltersProps) {
   const isAllSelected = selectedTypeIds.length === CONTENT_TYPES.length;
   const isSomeSelected = selectedTypeIds.length > 0 && !isAllSelected;
 
-  return (
-    <div
-      className={cn(
-        'flex flex-col md:flex-row gap-4 md:gap-6',
-        'p-4 md:p-6',
-        'bg-card rounded-lg border',
-        className,
-      )}
-    >
+  // 필터 컨텐츠 (공통)
+  const filterContent = (
+    <div className="flex flex-col md:flex-row gap-4 md:gap-6">
       {/* 지역 필터 */}
       <div className="flex flex-col gap-2 flex-1">
         <label
@@ -294,6 +343,49 @@ export function TourFilters({ areas, className }: TourFiltersProps) {
           리셋
         </Button>
       </div>
+    </div>
+  );
+
+  return (
+    <div
+      className={cn(
+        'bg-card rounded-lg border p-4 md:p-6',
+        className,
+      )}
+    >
+      {isMobile ? (
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+          <CollapsibleTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-full md:hidden justify-between mb-4"
+              aria-label={isOpen ? '필터 접기' : '필터 펼치기'}
+              aria-expanded={isOpen}
+            >
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4" />
+                <span>필터</span>
+                {activeFilterCount > 0 && (
+                  <span className="ml-2 px-2 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </div>
+              <ChevronDown
+                className={cn(
+                  'h-4 w-4 transition-transform duration-300',
+                  isOpen && 'rotate-180',
+                )}
+              />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            {filterContent}
+          </CollapsibleContent>
+        </Collapsible>
+      ) : (
+        filterContent
+      )}
     </div>
   );
 }
