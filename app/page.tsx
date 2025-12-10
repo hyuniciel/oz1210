@@ -22,6 +22,9 @@
  */
 
 import type { Metadata } from 'next';
+import { getAreaBasedList, searchKeyword } from '@/lib/api/tour-api';
+import { TourList } from '@/components/tour-list';
+import type { TourItem } from '@/lib/types/tour';
 
 /**
  * 페이지 메타데이터
@@ -50,9 +53,39 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   // URL 쿼리 파라미터 읽기 (Next.js 15에서는 Promise로 받음)
   const params = await searchParams;
   const keyword = params.keyword;
-  const areaCode = params.areaCode;
+  const areaCode = params.areaCode || '1'; // 기본값: 서울
   const contentTypeId = params.contentTypeId;
   const page = params.page ? parseInt(params.page, 10) : 1;
+
+  // 관광지 데이터 가져오기
+  let tours: TourItem[] = [];
+  let error: Error | null = null;
+
+  try {
+    if (keyword) {
+      // 키워드 검색
+      const searchResult = await searchKeyword({
+        keyword,
+        areaCode: areaCode !== '1' ? areaCode : undefined, // 전체 지역이 아니면 필터 적용
+        contentTypeId,
+        numOfRows: 20,
+        pageNo: page,
+      });
+      tours = searchResult.items;
+    } else {
+      // 지역 기반 목록 조회
+      const listResult = await getAreaBasedList({
+        areaCode,
+        contentTypeId,
+        numOfRows: 20,
+        pageNo: page,
+      });
+      tours = listResult.items;
+    }
+  } catch (err) {
+    error = err instanceof Error ? err : new Error('알 수 없는 오류가 발생했습니다.');
+    console.error('관광지 목록 조회 오류:', err);
+  }
 
   return (
     <section className="w-full">
@@ -81,10 +114,16 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               </div>
             )}
 
-            {/* 관광지 목록 컴포넌트가 여기에 배치됩니다 */}
-            <div className="text-sm text-muted-foreground">
-              관광지 목록 영역 (향후 구현)
-            </div>
+            {/* 관광지 목록 컴포넌트 */}
+            <TourList
+              tours={tours}
+              error={error}
+              emptyMessage={
+                keyword
+                  ? `"${keyword}"에 대한 검색 결과가 없습니다.`
+                  : '관광지를 찾을 수 없습니다.'
+              }
+            />
           </div>
 
           {/* 네이버 지도 섹션 */}

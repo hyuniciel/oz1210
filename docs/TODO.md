@@ -1,4 +1,4 @@
-- [ ] `.cursor/` 디렉토리
+b- [ ] `.cursor/` 디렉토리
   - [ ] `rules/` 커서룰
   - [ ] `mcp.json` MCP 서버 설정
   - [ ] `dir.md` 프로젝트 디렉토리 구조
@@ -140,24 +140,52 @@
     - [x] URL 쿼리 파라미터 처리 준비 (searchParams 타입 정의 및 읽기)
     - [x] 검색 키워드 표시 기능
     - [x] 반응형 레이아웃 구조 (데스크톱: 리스트 50% + 지도 50%, 모바일: 리스트만 표시)
-- [ ] 관광지 목록 기능 (MVP 2.1)
-  - [ ] `components/tour-card.tsx` 생성
-    - [ ] 썸네일 이미지 (기본 이미지 fallback)
-    - [ ] 관광지명
-    - [ ] 주소 표시
-    - [ ] 관광 타입 뱃지
-    - [ ] 간단한 개요 (1-2줄)
-    - [ ] 호버 효과 (scale, shadow)
-    - [ ] 클릭 시 상세페이지 이동
-  - [ ] `components/tour-list.tsx` 생성
-    - [ ] 그리드 레이아웃 (반응형)
-    - [ ] 카드 목록 표시
-    - [ ] 로딩 상태 (Skeleton UI)
-    - [ ] 빈 상태 처리
-  - [ ] API 연동
-    - [ ] `getAreaBasedList()` 호출
-    - [ ] 데이터 파싱 및 표시
-    - [ ] 에러 처리
+- [x] 관광지 목록 기능 (MVP 2.1)
+  - [x] `components/tour-card.tsx` 생성
+    - [x] 썸네일 이미지 (기본 이미지 fallback)
+    - [x] 관광지명
+    - [x] 주소 표시
+    - [x] 관광 타입 뱃지
+    - [x] 간단한 개요 (1-2줄)
+    - [x] 호버 효과 (scale, shadow)
+    - [x] 클릭 시 상세페이지 이동
+    - ---
+    - [x] Next.js Image 컴포넌트 사용 (이미지 최적화)
+    - [x] 이미지 비율 16:9 (aspect-video)
+    - [x] 관광 타입별 뱃지 색상 구분
+    - [x] HTML 태그 제거 및 텍스트 정리
+    - [x] 전화번호 클릭 이벤트 처리
+    - [x] 접근성 개선 (focus ring, aria-label)
+  - [x] `components/tour-list.tsx` 생성
+    - [x] 그리드 레이아웃 (반응형)
+    - [x] 카드 목록 표시
+    - [x] 로딩 상태 (Skeleton UI)
+    - [x] 빈 상태 처리
+    - ---
+    - [x] 반응형 그리드 (모바일: 1열, 태블릿: 2열, 데스크톱: 3열)
+    - [x] TourListSkeleton 컴포넌트 구현
+    - [x] EmptyState 컴포넌트 구현
+    - [x] 에러 상태 처리 (Error 컴포넌트 사용)
+  - [x] API 연동
+    - [x] `getAreaBasedList()` 호출
+    - [x] 데이터 파싱 및 표시
+    - [x] 에러 처리
+    - ---
+    - [x] Server Component에서 API 호출
+    - [x] 키워드 검색 시 `searchKeyword()` 호출
+    - [x] 기본값: 서울 지역 (areaCode: "1")
+    - [x] URL 파라미터 기반 조건부 API 호출
+    - [x] try-catch로 에러 처리
+    - [x] TourList 컴포넌트에 데이터 전달
+  - [x] 유틸리티 함수
+    - [x] `lib/utils/tour.ts` 생성
+    - [x] `getContentTypeName()` - 타입 ID를 타입명으로 변환
+    - [x] `getContentTypeInfo()` - 타입명과 색상 정보 반환
+    - [x] `formatAddress()` - 주소 포맷팅
+    - [x] `truncateText()` - 텍스트 말줄임표 처리
+    - [x] `stripHtmlTags()` - HTML 태그 제거
+  - [x] 이미지 설정
+    - [x] `next.config.ts`에 외부 이미지 도메인 추가 (apis.data.go.kr)
 - [ ] 필터 기능
   - [ ] `components/tour-filters.tsx` 생성
     - [ ] 지역 필터 (시/도 선택)
