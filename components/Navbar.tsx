@@ -15,6 +15,7 @@ import { useState, useEffect } from 'react';
 import { Search, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { updateFilterParams } from '@/lib/utils/filters';
 
 export default function Navbar() {
   const router = useRouter();
@@ -31,7 +32,12 @@ export default function Navbar() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/?keyword=${encodeURIComponent(searchQuery.trim())}`);
+      // 기존 필터를 유지하면서 keyword만 업데이트
+      const newParams = updateFilterParams(searchParams, {
+        keyword: searchQuery.trim(),
+        page: 1, // 검색 시 첫 페이지로 리셋
+      });
+      router.push(`/?${newParams.toString()}`);
       setIsMobileMenuOpen(false);
     }
   };
