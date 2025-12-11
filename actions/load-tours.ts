@@ -27,6 +27,8 @@ export interface LoadMoreToursParams {
   pageNo: number;
   /** 지역 코드 */
   areaCode?: string;
+  /** 시/군/구 코드 */
+  sigunguCode?: string;
   /** 관광 타입 ID */
   contentTypeId?: string;
   /** 검색 키워드 */
@@ -64,6 +66,7 @@ export async function loadMoreTours(
   const {
     pageNo,
     areaCode = '1',
+    sigunguCode,
     contentTypeId,
     keyword,
     petFriendly = false,
@@ -84,6 +87,7 @@ export async function loadMoreTours(
       const searchResult = await searchKeyword({
         keyword,
         areaCode: areaCode !== '1' ? areaCode : undefined,
+        sigunguCode,
         contentTypeId,
         numOfRows,
         pageNo,
@@ -94,6 +98,7 @@ export async function loadMoreTours(
       // 지역 기반 목록 조회
       const listResult = await getAreaBasedList({
         areaCode,
+        sigunguCode,
         contentTypeId,
         numOfRows,
         pageNo,

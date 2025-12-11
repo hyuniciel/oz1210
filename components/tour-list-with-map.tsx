@@ -65,8 +65,12 @@ export function TourListWithMap({
   const searchParams = useSearchParams();
   const selectedTourId = searchParams.get('selectedTourId') || undefined;
   const [activeTab, setActiveTab] = useState<'list' | 'map'>('list');
+  const [isMounted, setIsMounted] = useState(false);
   
-  // useId() 제거하고 고정된 문자열 사용
+  // 클라이언트에서만 마운트되도록 처리 (hydration mismatch 방지)
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // 무한 스크롤 Hook 사용
   const {
@@ -133,18 +137,51 @@ export function TourListWithMap({
   return (
     <>
       {/* 모바일: 탭 형태 */}
-      <div className="lg:hidden" suppressHydrationWarning>
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'list' | 'map')}>
-          <TabsList className="w-full mb-4" aria-label="목록과 지도 전환">
-            <TabsTrigger value="list" className="flex-1" aria-label={`목록 보기, ${tours.length}개 항목`}>
-              목록 ({tours.length})
-            </TabsTrigger>
-            <TabsTrigger value="map" className="flex-1" aria-label="지도 보기">
-              지도
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="list" className="mt-0">
-            {/* 검색 키워드 및 결과 개수 표시 */}
+      <div className="lg:hidden">
+        {isMounted ? (
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'list' | 'map')}>
+            <TabsList className="w-full mb-4" aria-label="목록과 지도 전환">
+              <TabsTrigger value="list" className="flex-1" aria-label={`목록 보기, ${tours.length}개 항목`}>
+                목록 ({tours.length})
+              </TabsTrigger>
+              <TabsTrigger value="map" className="flex-1" aria-label="지도 보기">
+                지도
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="list" className="mt-0">
+              {/* 검색 키워드 및 결과 개수 표시 */}
+              {keyword && (
+                <div className="mb-4">
+                  <h2 className="text-xl font-semibold">
+                    &quot;{keyword}&quot; 검색 결과: {tours.length}개
+                  </h2>
+                </div>
+              )}
+              <TourList
+                tours={tours}
+                petInfoMap={petInfoMap}
+                error={displayError}
+                emptyMessage={emptyMessage}
+                selectedTourId={selectedTourId}
+                onLoadMore={loadMore}
+                hasMore={hasMore}
+                isLoadingMore={isLoadingMore}
+              />
+            </TabsContent>
+            <TabsContent value="map" className="mt-0">
+              <div className="h-[400px] rounded-lg overflow-hidden">
+                <NaverMap
+                  tours={tours}
+                  selectedTourId={selectedTourId}
+                  onMarkerClick={handleMarkerClick}
+                  className="h-full"
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
+        ) : (
+          // 서버 사이드 렌더링 시 기본 목록 표시
+          <div>
             {keyword && (
               <div className="mb-4">
                 <h2 className="text-xl font-semibold">
@@ -162,18 +199,8 @@ export function TourListWithMap({
               hasMore={hasMore}
               isLoadingMore={isLoadingMore}
             />
-          </TabsContent>
-          <TabsContent value="map" className="mt-0">
-            <div className="h-[400px] rounded-lg overflow-hidden">
-              <NaverMap
-                tours={tours}
-                selectedTourId={selectedTourId}
-                onMarkerClick={handleMarkerClick}
-                className="h-full"
-              />
-            </div>
-          </TabsContent>
-        </Tabs>
+          </div>
+        )}
       </div>
 
       {/* 데스크톱: 분할 레이아웃 */}

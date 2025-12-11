@@ -91,6 +91,7 @@ export function useInfiniteTours(
       // 현재 URL 파라미터에서 필터 정보 가져오기
       const searchParams = new URLSearchParams(window.location.search);
       const areaCode = searchParams.get('areaCode') || '1';
+      const sigunguCode = searchParams.get('sigunguCode') || undefined;
       const contentTypeId = searchParams.get('contentTypeId') || undefined;
       const keyword = searchParams.get('keyword') || undefined;
       const petFriendly = searchParams.get('petFriendly') === 'true';
@@ -102,6 +103,7 @@ export function useInfiniteTours(
       const loadParams: LoadMoreToursParams = {
         pageNo: currentPage + 1,
         areaCode,
+        sigunguCode,
         contentTypeId,
         keyword,
         petFriendly,

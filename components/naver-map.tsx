@@ -78,6 +78,7 @@ declare global {
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace naver.maps {
     interface Map {
       setCenter(center: LatLng): void;
@@ -85,7 +86,9 @@ declare global {
       setMapTypeId(typeId: string): void;
       fitBounds(bounds: LatLngBounds): void;
     }
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
     interface LatLng {}
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
     interface LatLngBounds {}
     interface Marker {
       setMap(map: Map | null): void;
@@ -94,6 +97,7 @@ declare global {
       open(map: Map, marker: Marker): void;
       close(): void;
     }
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
     interface Point {}
     type Position = string;
   }

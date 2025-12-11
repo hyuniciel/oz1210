@@ -24,7 +24,6 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { getAreaCode, getAreaBasedList, searchKeyword, getDetailPetTour } from '@/lib/api/tour-api';
-import { TourList } from '@/components/tour-list';
 import { TourListWithMap } from '@/components/tour-list-with-map';
 import { TourFilters } from '@/components/tour-filters';
 import { sortTours } from '@/lib/utils/sort';
@@ -72,6 +71,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const filterParams = parseFilterParams(params);
   const keyword = filterParams.keyword;
   const areaCode = filterParams.areaCode || '1'; // 기본값: 서울
+  const sigunguCode = filterParams.sigunguCode; // 시/군/구 코드
   const contentTypeId = filterParams.contentTypeId;
   const sort = filterParams.sort || 'latest'; // 기본값: 최신순
   const page = filterParams.page || 1;
@@ -100,6 +100,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       const searchResult = await searchKeyword({
         keyword,
         areaCode: areaCode !== '1' ? areaCode : undefined, // 전체 지역이 아니면 필터 적용
+        sigunguCode,
         contentTypeId,
         numOfRows: 20,
         pageNo: page,
@@ -110,6 +111,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       // 지역 기반 목록 조회
       const listResult = await getAreaBasedList({
         areaCode,
+        sigunguCode,
         contentTypeId,
         numOfRows: 20,
         pageNo: page,

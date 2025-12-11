@@ -18,6 +18,8 @@
 export interface FilterParams {
   /** 지역 코드 (기본값: '1' - 서울) */
   areaCode?: string;
+  /** 시/군/구 코드 */
+  sigunguCode?: string;
   /** 관광 타입 ID */
   contentTypeId?: string;
   /** 정렬 옵션 ('latest' | 'name') */
@@ -57,6 +59,7 @@ export function parseFilterParams(
   };
 
   const areaCode = getParam('areaCode') || DEFAULT_FILTERS.areaCode;
+  const sigunguCode = getParam('sigunguCode');
   const contentTypeId = getParam('contentTypeId');
   const sort = (getParam('sort') as 'latest' | 'name') || DEFAULT_FILTERS.sort;
   const petFriendly = getParam('petFriendly') === 'true';
@@ -68,6 +71,7 @@ export function parseFilterParams(
 
   return {
     areaCode,
+    sigunguCode,
     contentTypeId,
     sort,
     petFriendly: petFriendly || undefined,
@@ -95,6 +99,11 @@ export function buildFilterParams(
     if (keepDefaults || filters.areaCode !== DEFAULT_FILTERS.areaCode) {
       params.set('areaCode', filters.areaCode);
     }
+  }
+
+  // sigunguCode 처리 (값이 있을 때만)
+  if (filters.sigunguCode) {
+    params.set('sigunguCode', filters.sigunguCode);
   }
 
   // contentTypeId 처리
@@ -156,7 +165,7 @@ export function mergeFilterParams(
 }
 
 /**
- * 필터를 기본값으로 리셋 (keyword는 유지)
+ * 필터를 기본값으로 리셋 (keyword는 유지, sigunguCode는 제거)
  * @param current 현재 필터 파라미터
  * @returns 리셋된 FilterParams 객체
  */
@@ -164,6 +173,7 @@ export function resetFilterParams(current: FilterParams): FilterParams {
   return {
     ...DEFAULT_FILTERS,
     keyword: current.keyword, // keyword는 유지
+    // sigunguCode는 제거됨
   };
 }
 

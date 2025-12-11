@@ -237,6 +237,28 @@ export async function getAreaCode(params?: {
 }
 
 /**
+ * 시/군/구 코드 조회
+ * @param params 필수: areaCode (시/도 코드), 선택: numOfRows, pageNo
+ * @returns 시/군/구 코드 목록
+ */
+export async function getSigunguCode(params: {
+  areaCode: string;
+  numOfRows?: number;
+  pageNo?: number;
+}): Promise<AreaCode[]> {
+  const queryParams = buildQueryParams({
+    areaCode: params.areaCode,
+    numOfRows: params.numOfRows || 100,
+    pageNo: params.pageNo || 1,
+  });
+
+  const url = `${BASE_URL}/areaCode2?${queryParams}`;
+  const response = await retryRequest<ApiListResponse<AreaCode>>(url);
+
+  return extractItems(response);
+}
+
+/**
  * 지역 기반 관광지 목록 조회
  * @param params 필수: areaCode, 선택: contentTypeId, numOfRows, pageNo, sigunguCode
  * @returns 관광지 목록 및 페이지네이션 정보
@@ -272,12 +294,13 @@ export async function getAreaBasedList(params: {
 
 /**
  * 키워드 검색
- * @param params 필수: keyword, 선택: areaCode, contentTypeId, numOfRows, pageNo
+ * @param params 필수: keyword, 선택: areaCode, sigunguCode, contentTypeId, numOfRows, pageNo
  * @returns 검색 결과 목록
  */
 export async function searchKeyword(params: {
   keyword: string;
   areaCode?: string;
+  sigunguCode?: string;
   contentTypeId?: string;
   numOfRows?: number;
   pageNo?: number;
@@ -285,6 +308,7 @@ export async function searchKeyword(params: {
   const queryParams = buildQueryParams({
     keyword: params.keyword,
     areaCode: params.areaCode,
+    sigunguCode: params.sigunguCode,
     contentTypeId: params.contentTypeId,
     numOfRows: params.numOfRows || 20,
     pageNo: params.pageNo || 1,

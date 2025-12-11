@@ -33,7 +33,7 @@ import { MapPin, Tag, ArrowUpDown, X, Heart, ChevronDown, Filter, AlertCircle } 
 import type { AreaCode } from '@/lib/types/tour';
 import { CONTENT_TYPES } from '@/lib/constants/content-types';
 import { DEFAULT_AREAS } from '@/lib/constants/areas';
-import { getAreaCode } from '@/lib/api/tour-api';
+import { getAreaCode, getSigunguCode } from '@/lib/api/tour-api';
 import {
   Select,
   SelectContent,
@@ -109,6 +109,11 @@ export function TourFilters({ areas: areasProp, className }: TourFiltersProps) {
   const [isLoadingAreas, setIsLoadingAreas] = useState(false);
   const [areasError, setAreasError] = useState<Error | null>(null);
 
+  // 시/군/구 목록 로드 상태 관리
+  const [sigunguList, setSigunguList] = useState<AreaCode[]>([]);
+  const [isLoadingSigungu, setIsLoadingSigungu] = useState(false);
+  const [sigunguError, setSigunguError] = useState<Error | null>(null);
+
   // 필터 변경 에러 상태 관리
   const [filterError, setFilterError] = useState<string | null>(null);
 
@@ -118,11 +123,11 @@ export function TourFilters({ areas: areasProp, className }: TourFiltersProps) {
   // 현재 필터 값 읽기 (필터 유틸리티 함수 사용)
   const filterParams = parseFilterParams(searchParams);
   const currentAreaCode = filterParams.areaCode || '1'; // 기본값: 서울
+  const currentSigunguCode = filterParams.sigunguCode || ''; // 시/군/구 코드
   const currentContentTypeId = filterParams.contentTypeId || '';
   const currentSort = filterParams.sort || 'latest';
   const currentPetFriendly = filterParams.petFriendly || false;
   const currentPetSize = filterParams.petSize || [];
-  const keyword = filterParams.keyword || '';
 
   // 관광 타입 필터 상태 (체크박스용)
   const selectedTypeIds = currentContentTypeId
@@ -135,6 +140,9 @@ export function TourFilters({ areas: areasProp, className }: TourFiltersProps) {
 
     // 지역 필터: 기본값("1")과 다르면 카운트
     if (currentAreaCode !== '1') count++;
+
+    // 시/군/구 필터: 선택되면 카운트
+    if (currentSigunguCode) count++;
 
     // 관광 타입 필터: 선택되면 카운트
     if (currentContentTypeId) count++;
@@ -167,6 +175,17 @@ export function TourFilters({ areas: areasProp, className }: TourFiltersProps) {
         label: '지역',
         value: currentAreaCode,
         displayValue: area?.name || '알 수 없음',
+      });
+    }
+
+    // 시/군/구 필터: 선택되면 추가
+    if (currentSigunguCode) {
+      const sigungu = sigunguList.find((s) => s.code === currentSigunguCode);
+      filters.push({
+        key: 'sigunguCode',
+        label: '시/군/구',
+        value: currentSigunguCode,
+        displayValue: sigungu?.name || '알 수 없음',
       });
     }
 
@@ -225,6 +244,10 @@ export function TourFilters({ areas: areasProp, className }: TourFiltersProps) {
     switch (filterKey) {
       case 'areaCode':
         updates.areaCode = DEFAULT_FILTERS.areaCode; // 기본값으로 리셋
+        updates.sigunguCode = undefined; // 지역 필터 제거 시 시/군/구 필터도 제거
+        break;
+      case 'sigunguCode':
+        updates.sigunguCode = undefined;
         break;
       case 'contentTypeId':
         updates.contentTypeId = undefined;
@@ -281,6 +304,40 @@ export function TourFilters({ areas: areasProp, className }: TourFiltersProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // 컴포넌트 마운트 시 한 번만 실행
 
+  // 시/군/구 목록 로드 (지역 필터가 선택되었을 때만)
+  useEffect(() => {
+    // 지역 필터가 기본값이거나 없으면 시/군/구 목록 로드하지 않음
+    if (!currentAreaCode || currentAreaCode === '1') {
+      setSigunguList([]);
+      setSigunguError(null);
+      return;
+    }
+
+    // 이미 같은 지역의 시/군/구 목록이 로드되어 있으면 재호출하지 않음
+    // (간단한 캐싱: 실제로는 더 정교한 캐싱이 필요할 수 있음)
+    const loadSigungu = async () => {
+      setIsLoadingSigungu(true);
+      setSigunguError(null);
+
+      try {
+        const loadedSigungu = await getSigunguCode({ areaCode: currentAreaCode });
+        setSigunguList(loadedSigungu);
+      } catch (err) {
+        console.error('시/군/구 목록 로드 실패:', err);
+        setSigunguError(
+          err instanceof Error
+            ? err
+            : new Error('시/군/구 목록을 불러올 수 없습니다.'),
+        );
+        setSigunguList([]);
+      } finally {
+        setIsLoadingSigungu(false);
+      }
+    };
+
+    loadSigungu();
+  }, [currentAreaCode]);
+
   // 모바일/데스크톱 감지
   useEffect(() => {
     const mediaQuery = window.matchMedia('(min-width: 768px)');
@@ -332,11 +389,21 @@ export function TourFilters({ areas: areasProp, className }: TourFiltersProps) {
   };
 
   /**
-   * 지역 필터 변경 핸들러
+   * 지역 필터 변경 핸들러 (시/군/구 필터도 리셋)
    */
   const handleAreaChange = (value: string) => {
     updateParams({
       areaCode: value === 'all' ? DEFAULT_FILTERS.areaCode : value,
+      sigunguCode: undefined, // 지역 변경 시 시/군/구 필터 리셋
+    });
+  };
+
+  /**
+   * 시/군/구 필터 변경 핸들러
+   */
+  const handleSigunguChange = (value: string) => {
+    updateParams({
+      sigunguCode: value === '' || value === 'all' ? undefined : value,
     });
   };
 
@@ -370,7 +437,7 @@ export function TourFilters({ areas: areasProp, className }: TourFiltersProps) {
    * 정렬 옵션 변경 핸들러
    */
   const handleSortChange = (value: string) => {
-    updateParams({ sort: value });
+    updateParams({ sort: value as 'latest' | 'name' });
   };
 
   /**
@@ -500,6 +567,55 @@ export function TourFilters({ areas: areasProp, className }: TourFiltersProps) {
             </Select>
           )}
         </div>
+
+        {/* 시/군/구 필터 (지역 필터가 선택되었을 때만 표시) */}
+        {currentAreaCode && currentAreaCode !== '1' && (
+          <div className="flex flex-col gap-2 flex-1">
+            <label
+              htmlFor="sigungu-filter"
+              className="text-sm font-medium flex items-center gap-2"
+            >
+              <MapPin className="h-4 w-4" aria-hidden="true" />
+              시/군/구
+            </label>
+            {isLoadingSigungu ? (
+              <Skeleton className="h-10 w-full" />
+            ) : sigunguError ? (
+              <div className="text-sm text-destructive p-2 border rounded-md">
+                시/군/구 목록을 불러올 수 없습니다.
+              </div>
+            ) : sigunguList.length === 0 ? (
+              <div className="text-sm text-muted-foreground p-2 border rounded-md">
+                해당 지역에 시/군/구가 없습니다.
+              </div>
+            ) : (
+              <Select
+                value={currentSigunguCode || ''}
+                onValueChange={handleSigunguChange}
+                disabled={sigunguList.length === 0}
+              >
+                <SelectTrigger
+                  id="sigungu-filter"
+                  className={cn(
+                    'w-full',
+                    currentSigunguCode && 'border-primary bg-primary/5 dark:bg-primary/10',
+                  )}
+                  aria-label="시/군/구 선택"
+                >
+                  <SelectValue placeholder="시/군/구를 선택하세요 (선택 사항)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">전체</SelectItem>
+                  {sigunguList.map((sigungu) => (
+                    <SelectItem key={sigungu.code} value={sigungu.code}>
+                      {sigungu.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        )}
 
       {/* 관광 타입 필터 */}
       <div className="flex flex-col gap-2 flex-1">
