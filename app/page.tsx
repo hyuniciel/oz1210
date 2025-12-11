@@ -27,7 +27,7 @@ import { getAreaCode, getAreaBasedList, searchKeyword, getDetailPetTour } from '
 import { TourList } from '@/components/tour-list';
 import { TourFilters } from '@/components/tour-filters';
 import { sortTours } from '@/lib/utils/sort';
-import { isPetFriendly } from '@/lib/utils/pet';
+import { isPetFriendly, matchesPetSizeFilter } from '@/lib/utils/pet';
 import type { TourItem, PetTourInfo } from '@/lib/types/tour';
 import { Loading } from '@/components/ui/loading';
 
@@ -49,6 +49,7 @@ interface HomePageProps {
     sort?: string;
     page?: string;
     petFriendly?: string;
+    petSize?: string;
   }>;
 }
 
@@ -65,6 +66,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const sort = params.sort || 'latest'; // 기본값: 최신순
   const page = params.page ? parseInt(params.page, 10) : 1;
   const petFriendly = params.petFriendly === 'true'; // 반려동물 필터
+  const petSize = params.petSize ? params.petSize.split(',') : []; // 반려동물 크기 필터
 
   // 지역 목록 로드
   let areas: Awaited<ReturnType<typeof getAreaCode>> = [];
@@ -131,7 +133,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       // 반려동물 동반 가능한 관광지만 필터링
       tours = tours.filter((tour) => {
         const petInfo = petInfoMap.get(tour.contentid);
-        return isPetFriendly(petInfo || null);
+        const isPet = isPetFriendly(petInfo || null);
+        
+        // 크기 필터가 선택된 경우 추가 필터링
+        if (petSize.length > 0) {
+          return isPet && matchesPetSizeFilter(petInfo || null, petSize);
+        }
+        
+        return isPet;
       });
 
       console.log(`[Pet Filter] 필터링 후 관광지 수: ${tours.length}개`);

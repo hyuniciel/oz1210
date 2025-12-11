@@ -198,25 +198,36 @@ b- [ ] `.cursor/` 디렉토리
       - [x] "전체" 옵션
     - [x] 반려동물 동반 가능 필터 (MVP 2.5)
       - [x] 토글 버튼
-      - [ ] 크기별 필터 (소형, 중형, 대형)
+      - [x] 크기별 필터 (소형, 중형, 대형)
       - ---
-      - [ ] 반려동물 크기별 필터 구현
-        - [ ] `components/tour-filters.tsx`에 크기 필터 UI 추가
-          - [ ] Checkbox 그룹으로 크기 선택 (소형, 중형, 대형)
-          - [ ] 반려동물 필터 활성화 시에만 크기 필터 표시
-          - [ ] URL 파라미터: `petSize` (다중 선택, 쉼표로 구분)
-        - [ ] 필터 상태 관리 구현
-          - [ ] `petSize` 파라미터 읽기 및 업데이트
-          - [ ] 반려동물 필터와 크기 필터 조합 처리
-          - [ ] 필터 변경 시 URL 파라미터 동기화
-        - [ ] 필터링 로직 구현
-          - [ ] `app/page.tsx`에서 `petSize` 파라미터 읽기
-          - [ ] 반려동물 정보 조회 후 크기 필터 적용
-          - [ ] `matchesPetSizeFilter()` 함수 활용
-        - [ ] UI/UX 개선
-          - [ ] 크기 필터 레이블 및 아이콘 추가
-          - [ ] 반려동물 필터 활성화 시 크기 필터 표시/숨김
-          - [ ] 크기 필터 초기화 기능
+      - [x] 반려동물 크기별 필터 구현
+        - [x] `components/tour-filters.tsx`에 크기 필터 UI 추가
+          - [x] Checkbox 그룹으로 크기 선택 (소형, 중형, 대형)
+          - [x] 반려동물 필터 활성화 시에만 크기 필터 표시
+          - [x] URL 파라미터: `petSize` (다중 선택, 쉼표로 구분)
+        - [x] 필터 상태 관리 구현
+          - [x] `petSize` 파라미터 읽기 및 업데이트
+          - [x] 반려동물 필터와 크기 필터 조합 처리
+          - [x] 필터 변경 시 URL 파라미터 동기화
+        - [x] 필터링 로직 구현
+          - [x] `app/page.tsx`에서 `petSize` 파라미터 읽기
+          - [x] 반려동물 정보 조회 후 크기 필터 적용
+          - [x] `matchesPetSizeFilter()` 함수 활용
+        - [x] UI/UX 개선
+          - [x] 크기 필터 레이블 및 아이콘 추가
+          - [x] 반려동물 필터 활성화 시 크기 필터 표시/숨김
+          - [x] 크기 필터 초기화 기능
+      - ---
+      - 추가 개발 사항
+        - [x] `components/tour-filters.tsx`에 PET_SIZES 상수 정의 및 크기 필터 UI 구현
+        - [x] `handlePetSizeChange` 핸들러 함수 구현 (다중 선택 지원)
+        - [x] `getActiveFilterCount` 함수에 크기 필터 카운트 추가
+        - [x] `getActiveFilters` 함수에 크기 필터 정보 추가
+        - [x] `handleRemoveFilter` 함수에 `petSize` 케이스 추가
+        - [x] `handlePetFriendlyChange` 함수에서 반려동물 필터 해제 시 크기 필터도 함께 해제
+        - [x] `app/page.tsx`에 `petSize` 파라미터 읽기 및 필터링 로직 추가
+        - [x] `matchesPetSizeFilter` 함수 import 및 활용
+        - [x] `HomePageProps` 인터페이스에 `petSize` 필드 추가
       - ---
       - [x] `lib/utils/pet.ts` 생성 (반려동물 정보 처리 유틸리티 함수)
         - [x] `isPetFriendly()` 함수 구현

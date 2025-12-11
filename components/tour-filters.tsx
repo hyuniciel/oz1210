@@ -49,6 +49,16 @@ import {
 } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { getPetSizeLabel } from '@/lib/utils/pet';
+
+/**
+ * 반려동물 크기 필터 옵션
+ */
+const PET_SIZES = [
+  { id: '소형견', label: '소형견', value: '소형견' },
+  { id: '중형견', label: '중형견', value: '중형견' },
+  { id: '대형견', label: '대형견', value: '대형견' },
+] as const;
 
 export interface TourFiltersProps {
   /** 지역 목록 */
@@ -87,6 +97,9 @@ export function TourFilters({ areas, className }: TourFiltersProps) {
   const currentContentTypeId = searchParams.get('contentTypeId') || '';
   const currentSort = searchParams.get('sort') || 'latest';
   const currentPetFriendly = searchParams.get('petFriendly') === 'true';
+  const currentPetSize = searchParams.get('petSize')
+    ? searchParams.get('petSize')!.split(',')
+    : [];
   const keyword = searchParams.get('keyword') || '';
 
   // 관광 타입 필터 상태 (체크박스용)
@@ -109,6 +122,9 @@ export function TourFilters({ areas, className }: TourFiltersProps) {
 
     // 반려동물 필터: 활성화되면 카운트
     if (currentPetFriendly) count++;
+
+    // 반려동물 크기 필터: 선택되면 카운트 (반려동물 필터 활성화 시에만)
+    if (currentPetFriendly && currentPetSize.length > 0) count++;
 
     return count;
   };
@@ -163,6 +179,16 @@ export function TourFilters({ areas, className }: TourFiltersProps) {
       });
     }
 
+    // 반려동물 크기 필터: 선택되면 추가
+    if (currentPetSize.length > 0) {
+      filters.push({
+        key: 'petSize',
+        label: '반려동물 크기',
+        value: currentPetSize.join(','),
+        displayValue: currentPetSize.map(getPetSizeLabel).join(', '),
+      });
+    }
+
     return filters;
   };
 
@@ -186,6 +212,10 @@ export function TourFilters({ areas, className }: TourFiltersProps) {
         break;
       case 'petFriendly':
         updates.petFriendly = null;
+        updates.petSize = null; // 반려동물 필터 해제 시 크기 필터도 해제
+        break;
+      case 'petSize':
+        updates.petSize = null;
         break;
     }
 
@@ -280,7 +310,33 @@ export function TourFilters({ areas, className }: TourFiltersProps) {
    * 반려동물 필터 변경 핸들러
    */
   const handlePetFriendlyChange = (checked: boolean) => {
-    updateParams({ petFriendly: checked ? 'true' : null });
+    if (checked) {
+      updateParams({ petFriendly: 'true' });
+    } else {
+      // 반려동물 필터 해제 시 크기 필터도 함께 해제
+      updateParams({ petFriendly: null, petSize: null });
+    }
+  };
+
+  /**
+   * 반려동물 크기 필터 변경 핸들러
+   */
+  const handlePetSizeChange = (sizeValue: string, checked: boolean) => {
+    const currentSizes = currentPetSize;
+    let newSizes: string[];
+
+    if (checked) {
+      // 추가: 중복 방지
+      newSizes = [...new Set([...currentSizes, sizeValue])];
+    } else {
+      // 제거
+      newSizes = currentSizes.filter((size) => size !== sizeValue);
+    }
+
+    // URL 파라미터 업데이트
+    updateParams({
+      petSize: newSizes.length > 0 ? newSizes.join(',') : null,
+    });
   };
 
   /**
@@ -469,6 +525,38 @@ export function TourFilters({ areas, className }: TourFiltersProps) {
           </label>
         </div>
       </div>
+
+      {/* 반려동물 크기 필터 (반려동물 필터 활성화 시에만 표시) */}
+      {currentPetFriendly && (
+        <div className="flex flex-col gap-2 flex-1">
+          <label className="text-sm font-medium flex items-center gap-2">
+            <span>크기</span>
+          </label>
+          <div className="flex flex-col gap-2 border rounded-md p-2 transition-all duration-300">
+            {PET_SIZES.map((size) => {
+              const isChecked = currentPetSize.includes(size.value);
+              return (
+                <div key={size.id} className="flex items-center gap-2">
+                  <Checkbox
+                    id={`pet-size-${size.id}`}
+                    checked={isChecked}
+                    onCheckedChange={(checked) =>
+                      handlePetSizeChange(size.value, checked === true)
+                    }
+                    aria-label={`${size.label} 필터`}
+                  />
+                  <label
+                    htmlFor={`pet-size-${size.id}`}
+                    className="text-sm cursor-pointer select-none"
+                  >
+                    {size.label}
+                  </label>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* 필터 리셋 버튼 */}
       <div className="flex items-end">
