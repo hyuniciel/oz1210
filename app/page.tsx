@@ -182,11 +182,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           {/* 관광지 목록 섹션 */}
           {/* TODO: 향후 tour-list 컴포넌트 배치 */}
           <div className="flex-1 lg:w-1/2">
-            {/* 검색 키워드 표시 (있는 경우) */}
+            {/* 검색 키워드 및 결과 개수 표시 (있는 경우) */}
             {keyword && (
               <div className="mb-4">
                 <h2 className="text-xl font-semibold">
-                  검색 결과: &quot;{keyword}&quot;
+                  &quot;{keyword}&quot; 검색 결과: {tours.length}개
                 </h2>
               </div>
             )}

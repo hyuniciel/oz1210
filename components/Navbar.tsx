@@ -10,16 +10,23 @@
 
 import { SignedOut, SignInButton, SignUpButton, SignedIn, UserButton } from '@clerk/nextjs';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { Search, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 export default function Navbar() {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState('');
+  const searchParams = useSearchParams();
+  const keywordFromUrl = searchParams.get('keyword') || '';
+  const [searchQuery, setSearchQuery] = useState(keywordFromUrl);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // URL 파라미터 변경 시 검색창 동기화
+  useEffect(() => {
+    setSearchQuery(keywordFromUrl);
+  }, [keywordFromUrl]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
