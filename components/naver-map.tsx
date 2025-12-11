@@ -284,7 +284,9 @@ export function NaverMap({
         markersRef.current.push(marker);
         infoWindowsRef.current.push(infoWindow);
       } catch (err) {
-        console.warn(`마커 생성 실패 (${tour.contentid}):`, err);
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(`마커 생성 실패 (${tour.contentid}):`, err);
+        }
       }
     });
 

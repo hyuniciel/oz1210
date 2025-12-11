@@ -65,6 +65,8 @@ export function TourListWithMap({
   const searchParams = useSearchParams();
   const selectedTourId = searchParams.get('selectedTourId') || undefined;
   const [activeTab, setActiveTab] = useState<'list' | 'map'>('list');
+  
+  // useId() 제거하고 고정된 문자열 사용
 
   // 무한 스크롤 Hook 사용
   const {
@@ -131,13 +133,13 @@ export function TourListWithMap({
   return (
     <>
       {/* 모바일: 탭 형태 */}
-      <div className="lg:hidden">
+      <div className="lg:hidden" suppressHydrationWarning>
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'list' | 'map')}>
-          <TabsList className="w-full mb-4">
-            <TabsTrigger value="list" className="flex-1">
+          <TabsList className="w-full mb-4" aria-label="목록과 지도 전환">
+            <TabsTrigger value="list" className="flex-1" aria-label={`목록 보기, ${tours.length}개 항목`}>
               목록 ({tours.length})
             </TabsTrigger>
-            <TabsTrigger value="map" className="flex-1">
+            <TabsTrigger value="map" className="flex-1" aria-label="지도 보기">
               지도
             </TabsTrigger>
           </TabsList>

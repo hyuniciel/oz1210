@@ -30,6 +30,7 @@ import { TourFilters } from '@/components/tour-filters';
 import { sortTours } from '@/lib/utils/sort';
 import { isPetFriendly, matchesPetSizeFilter } from '@/lib/utils/pet';
 import { parseFilterParams } from '@/lib/utils/filters';
+import { getErrorInfo } from '@/lib/utils/error';
 import { DEFAULT_AREAS } from '@/lib/constants/areas';
 import type { TourItem, PetTourInfo } from '@/lib/types/tour';
 import { Loading } from '@/components/ui/loading';
@@ -119,7 +120,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
     // 반려동물 필터가 활성화된 경우, 각 관광지에 대해 반려동물 정보 조회
     if (petFriendly && tours.length > 0) {
-      console.log(`[Pet Filter] 반려동물 정보 조회 시작: ${tours.length}개 관광지`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[Pet Filter] 반려동물 정보 조회 시작: ${tours.length}개 관광지`);
+      }
       
       // 병렬로 반려동물 정보 조회 (최대 20개)
       const petInfoPromises = tours.slice(0, 20).map(async (tour) => {
@@ -128,7 +131,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           return { contentId: tour.contentid, petInfo };
         } catch (err) {
           // 일부 관광지의 반려동물 정보 조회 실패 시에도 계속 진행
-          console.warn(`[Pet Filter] 반려동물 정보 조회 실패 (${tour.contentid}):`, err);
+          if (process.env.NODE_ENV === 'development') {
+            console.warn(`[Pet Filter] 반려동물 정보 조회 실패 (${tour.contentid}):`, err);
+          }
           return { contentId: tour.contentid, petInfo: null };
         }
       });
@@ -142,7 +147,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         }
       });
 
-      console.log(`[Pet Filter] 반려동물 정보 조회 완료: ${petInfoMap.size}개`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[Pet Filter] 반려동물 정보 조회 완료: ${petInfoMap.size}개`);
+      }
       
       // 반려동물 동반 가능한 관광지만 필터링
       tours = tours.filter((tour) => {
@@ -157,13 +164,16 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         return isPet;
       });
 
-      console.log(`[Pet Filter] 필터링 후 관광지 수: ${tours.length}개`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[Pet Filter] 필터링 후 관광지 수: ${tours.length}개`);
+      }
     }
 
     // 정렬 적용 (클라이언트 사이드)
     tours = sortTours(tours, sort as 'latest' | 'name');
   } catch (err) {
-    error = err instanceof Error ? err : new Error('알 수 없는 오류가 발생했습니다.');
+    const errorInfo = getErrorInfo(err);
+    error = new Error(errorInfo.message);
     console.error('관광지 목록 조회 오류:', err);
   }
 

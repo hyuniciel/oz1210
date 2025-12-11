@@ -75,6 +75,8 @@ export function TourCard({ tour, petInfo, isSelected = false, className }: TourC
         'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
         className,
       )}
+      aria-label={`${tour.title}${address ? `, ${address}` : ''}${isPet ? ', 반려동물 동반 가능' : ''}`}
+      aria-describedby={`tour-card-${tour.contentid}-description`}
     >
       {/* 이미지 영역 */}
       <div className="relative w-full aspect-video overflow-hidden bg-muted">
@@ -119,7 +121,10 @@ export function TourCard({ tour, petInfo, isSelected = false, className }: TourC
       {/* 정보 영역 */}
       <div className="p-4 space-y-3">
         {/* 관광지명 */}
-        <h3 className="text-lg font-semibold line-clamp-2 group-hover:text-primary transition-colors">
+        <h3 
+          id={`tour-card-${tour.contentid}-description`}
+          className="text-lg font-semibold line-clamp-2 group-hover:text-primary transition-colors"
+        >
           {tour.title}
         </h3>
 

@@ -16,6 +16,7 @@
 
 import { useState, useCallback } from 'react';
 import { loadMoreTours, type LoadMoreToursParams } from '@/actions/load-tours';
+import { getErrorInfo } from '@/lib/utils/error';
 import type { TourItem, PetTourInfo } from '@/lib/types/tour';
 
 /**
@@ -128,7 +129,8 @@ export function useInfiniteTours(
       setCurrentPage(result.hasMore ? currentPage + 1 : currentPage + 1);
       setTotalCount(result.totalCount);
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('알 수 없는 오류가 발생했습니다.');
+      const errorInfo = getErrorInfo(err);
+      const error = new Error(errorInfo.message);
       setError(error);
       console.error('[useInfiniteTours] 페이지 로드 오류:', err);
     } finally {

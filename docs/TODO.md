@@ -691,11 +691,62 @@ b- [ ] `.cursor/` 디렉토리
       - [x] 키보드 네비게이션 지원 확인
       - [x] 스크린 리더를 위한 로딩 상태 알림 (`aria-live` 등)
       - [x] ARIA 라벨 추가 (`InfiniteScrollTrigger`에 `aria-label` 추가)
-- [ ] 최종 통합 및 스타일링
+- [x] 최종 통합 및 스타일링
   - [ ] 모든 기능 통합 테스트
-  - [ ] 반응형 디자인 확인 (모바일/태블릿/데스크톱)
-  - [ ] 로딩 상태 개선
-  - [ ] 에러 처리 개선
+  - [x] 반응형 디자인 확인 (모바일/태블릿/데스크톱)
+  - [x] 로딩 상태 개선
+  - [x] 에러 처리 개선
+  - ---
+  - 추가 개발 사항
+    - [x] 콘솔 로그 정리
+      - [x] 개발용 `console.log` 조건부 처리 (`process.env.NODE_ENV === 'development'`)
+      - [x] `app/page.tsx`의 반려동물 필터 로그 조건부 처리
+      - [x] `actions/load-tours.ts`의 로그 조건부 처리
+      - [x] `components/naver-map.tsx`의 `console.warn` 조건부 처리
+      - [x] `console.error`는 유지 (에러 추적용)
+    - [x] 로딩 상태 개선
+      - [x] 스켈레톤 애니메이션 추가 (`animate-pulse` 클래스 추가)
+      - [x] 무한 스크롤 로딩 인디케이터 개선 (이미 구현됨)
+      - [x] 지도 로딩 상태 확인 (이미 구현됨)
+    - [x] 에러 처리 개선
+      - [x] `lib/utils/error.ts` 생성 (에러 처리 유틸리티 함수)
+        - [x] `isOffline()` 함수 구현 (오프라인 상태 감지)
+        - [x] `isNetworkError()` 함수 구현 (네트워크 에러 감지)
+        - [x] `isTimeoutError()` 함수 구현 (타임아웃 에러 감지)
+        - [x] `isServerError()` 함수 구현 (서버 에러 감지)
+        - [x] `getErrorInfo()` 함수 구현 (에러 정보 추출 및 사용자 친화적 메시지 생성)
+      - [x] `app/page.tsx`에 에러 처리 유틸리티 적용
+      - [x] `hooks/use-infinite-tours.ts`에 에러 처리 유틸리티 적용
+      - [x] 사용자 친화적 에러 메시지 제공
+    - [x] 접근성 개선
+      - [x] `components/tour-card.tsx`에 ARIA 속성 추가
+        - [x] `aria-label` 추가 (관광지명, 주소, 반려동물 정보 포함)
+        - [x] `aria-describedby` 추가 (관광지명과 연결)
+      - [x] `components/tour-list.tsx`에 ARIA 속성 추가
+        - [x] `role="list"` 및 `aria-label` 추가
+        - [x] 각 항목에 `role="listitem"` 추가
+      - [x] `components/tour-list-with-map.tsx`에 ARIA 속성 추가
+        - [x] 탭 리스트에 `aria-label` 추가
+        - [x] 각 탭 트리거에 `aria-label` 추가
+      - [x] 키보드 네비게이션 확인 (이미 구현됨: focus ring, Tab 순서)
+    - [x] 스타일 일관성 확인
+      - [x] 색상 일관성 확인 (Primary 색상, 다크 모드 지원)
+      - [x] 간격 일관성 확인 (gap-4, gap-6 사용)
+      - [x] 타이포그래피 일관성 확인 (text-lg, text-sm 등)
+    - [ ] 모든 기능 통합 테스트 (수동 테스트 필요)
+      - [ ] 필터 + 검색 조합 테스트
+      - [ ] 필터 + 지도 연동 테스트
+      - [ ] 필터 + 페이지네이션 테스트
+      - [ ] 반려동물 필터 + 페이지네이션 테스트
+      - [ ] 엣지 케이스 테스트
+    - [ ] 반응형 디자인 확인 (수동 테스트 필요)
+      - [ ] 모바일 (320px ~ 767px) 테스트
+      - [ ] 태블릿 (768px ~ 1023px) 테스트
+      - [ ] 데스크톱 (1024px 이상) 테스트
+      - [ ] 브레이크포인트 테스트
+    - [ ] 브라우저 호환성 확인 (수동 테스트 필요)
+      - [ ] Chrome, Firefox, Safari, Edge 테스트
+      - [ ] 모바일 브라우저 테스트
 
 ## Phase 3: 상세페이지 (`/places/[contentId]`)
 

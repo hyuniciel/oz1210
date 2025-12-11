@@ -104,7 +104,9 @@ export async function loadMoreTours(
 
     // 반려동물 필터가 활성화된 경우, 각 관광지에 대해 반려동물 정보 조회
     if (petFriendly && tours.length > 0) {
-      console.log(`[Load More] 반려동물 정보 조회 시작: ${tours.length}개 관광지`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[Load More] 반려동물 정보 조회 시작: ${tours.length}개 관광지`);
+      }
 
       // 병렬로 반려동물 정보 조회
       const petInfoPromises = tours.map(async (tour) => {
@@ -113,7 +115,9 @@ export async function loadMoreTours(
           return { contentId: tour.contentid, petInfo };
         } catch (err) {
           // 일부 관광지의 반려동물 정보 조회 실패 시에도 계속 진행
-          console.warn(`[Load More] 반려동물 정보 조회 실패 (${tour.contentid}):`, err);
+          if (process.env.NODE_ENV === 'development') {
+            console.warn(`[Load More] 반려동물 정보 조회 실패 (${tour.contentid}):`, err);
+          }
           return { contentId: tour.contentid, petInfo: null };
         }
       });
@@ -127,7 +131,9 @@ export async function loadMoreTours(
         }
       });
 
-      console.log(`[Load More] 반려동물 정보 조회 완료: ${petInfoMap.size}개`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[Load More] 반려동물 정보 조회 완료: ${petInfoMap.size}개`);
+      }
 
       // 반려동물 동반 가능한 관광지만 필터링
       tours = tours.filter((tour) => {
@@ -142,7 +148,9 @@ export async function loadMoreTours(
         return isPet;
       });
 
-      console.log(`[Load More] 필터링 후 관광지 수: ${tours.length}개`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[Load More] 필터링 후 관광지 수: ${tours.length}개`);
+      }
     }
 
     // 정렬 적용 (클라이언트 사이드)

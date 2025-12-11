@@ -62,7 +62,7 @@ function TourListSkeleton() {
       {Array.from({ length: 6 }).map((_, index) => (
         <div
           key={index}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden"
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden animate-pulse"
         >
           {/* 이미지 스켈레톤 */}
           <Skeleton className="w-full aspect-video" />
@@ -135,17 +135,22 @@ export function TourList({
   // 목록 표시
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+      <div 
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6"
+        role="list"
+        aria-label={`관광지 목록, 총 ${tours.length}개`}
+      >
         {tours.map((tour) => {
           const petInfo = petInfoMap?.get(tour.contentid) || null;
           const isSelected = selectedTourId === tour.contentid;
           return (
-            <TourCard
-              key={tour.contentid}
-              tour={tour}
-              petInfo={petInfo}
-              isSelected={isSelected}
-            />
+            <div key={tour.contentid} role="listitem">
+              <TourCard
+                tour={tour}
+                petInfo={petInfo}
+                isSelected={isSelected}
+              />
+            </div>
           );
         })}
       </div>
