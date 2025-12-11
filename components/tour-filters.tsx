@@ -29,7 +29,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { MapPin, Tag, ArrowUpDown, X, Heart, ChevronDown, Filter } from 'lucide-react';
+import { MapPin, Tag, ArrowUpDown, X, Heart, ChevronDown, Filter, AlertCircle } from 'lucide-react';
 import type { AreaCode } from '@/lib/types/tour';
 import { CONTENT_TYPES } from '@/lib/constants/content-types';
 import { DEFAULT_AREAS } from '@/lib/constants/areas';
@@ -51,8 +51,10 @@ import {
 } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { getPetSizeLabel } from '@/lib/utils/pet';
+import { toastError } from '@/lib/utils/toast';
 import {
   parseFilterParams,
   updateFilterParams,
@@ -106,6 +108,9 @@ export function TourFilters({ areas: areasProp, className }: TourFiltersProps) {
   const [areasState, setAreasState] = useState<AreaCode[]>(areasProp || []);
   const [isLoadingAreas, setIsLoadingAreas] = useState(false);
   const [areasError, setAreasError] = useState<Error | null>(null);
+
+  // 필터 변경 에러 상태 관리
+  const [filterError, setFilterError] = useState<string | null>(null);
 
   // 지역 목록 (props가 있으면 사용, 없으면 state 사용)
   const areas = areasProp || areasState;
@@ -304,14 +309,26 @@ export function TourFilters({ areas: areasProp, className }: TourFiltersProps) {
    * URL 파라미터 업데이트 함수 (필터 유틸리티 함수 사용)
    */
   const updateParams = (updates: Partial<FilterParams>) => {
-    // 필터 변경 시 page를 1로 리셋
-    const updatesWithPageReset = {
-      ...updates,
-      page: DEFAULT_FILTERS.page,
-    };
+    try {
+      // 필터 변경 시 page를 1로 리셋
+      const updatesWithPageReset = {
+        ...updates,
+        page: DEFAULT_FILTERS.page,
+      };
 
-    const newParams = updateFilterParams(searchParams, updatesWithPageReset);
-    router.push(`/?${newParams.toString()}`);
+      const newParams = updateFilterParams(searchParams, updatesWithPageReset);
+      router.push(`/?${newParams.toString()}`);
+
+      // 성공 시 에러 상태 초기화
+      setFilterError(null);
+    } catch (err) {
+      console.error('필터 변경 실패:', err);
+      const errorMessage = '필터를 변경할 수 없습니다. 다시 시도해주세요.';
+      setFilterError(errorMessage);
+      
+      // Toast 알림 표시
+      toastError('필터 변경 실패', errorMessage);
+    }
   };
 
   /**
@@ -404,6 +421,15 @@ export function TourFilters({ areas: areasProp, className }: TourFiltersProps) {
   // 필터 컨텐츠 (공통)
   const filterContent = (
     <div className="space-y-4">
+      {/* 필터 변경 에러 메시지 */}
+      {filterError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>필터 변경 실패</AlertTitle>
+          <AlertDescription>{filterError}</AlertDescription>
+        </Alert>
+      )}
+
       {/* 활성 필터 뱃지 섹션 */}
       {activeFilters.length > 0 && (
         <div className="flex flex-wrap gap-2">

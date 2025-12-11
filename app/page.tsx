@@ -29,6 +29,7 @@ import { TourFilters } from '@/components/tour-filters';
 import { sortTours } from '@/lib/utils/sort';
 import { isPetFriendly, matchesPetSizeFilter } from '@/lib/utils/pet';
 import { parseFilterParams } from '@/lib/utils/filters';
+import { DEFAULT_AREAS } from '@/lib/constants/areas';
 import type { TourItem, PetTourInfo } from '@/lib/types/tour';
 import { Loading } from '@/components/ui/loading';
 
@@ -78,6 +79,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     areas = await getAreaCode({ numOfRows: 100 });
   } catch (err) {
     console.error('지역 목록 조회 오류:', err);
+    // 에러 발생 시 기본 지역 목록 사용
+    areas = DEFAULT_AREAS;
   }
 
   // 관광지 데이터 가져오기
