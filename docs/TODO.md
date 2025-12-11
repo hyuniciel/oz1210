@@ -435,10 +435,22 @@ b- [ ] `.cursor/` 디렉토리
     - [x] Server Component에서 지역 목록 미리 로드
       - [x] app/page.tsx에서 getAreaCode() 호출
       - [x] 지역 목록을 TourFilters 컴포넌트에 props로 전달
-    - [ ] 또는 Client Component에서 로드
-      - [ ] TourFilters 내부에서 useEffect로 getAreaCode() 호출
-      - [ ] 로딩 상태 처리
-      - [ ] 에러 처리
+    - [x] 또는 Client Component에서 로드
+      - [x] TourFilters 내부에서 useEffect로 getAreaCode() 호출
+      - [x] 로딩 상태 처리
+      - [x] 에러 처리
+      - ---
+      - 추가 개발 사항
+        - [x] `lib/constants/areas.ts` 생성 (기본 지역 목록 상수 정의)
+        - [x] `TourFiltersProps` 인터페이스에서 `areas` prop을 optional로 변경
+        - [x] 지역 목록 로드 상태 관리 (useState: areasState, isLoadingAreas, areasError)
+        - [x] useEffect로 지역 목록 로드 로직 구현 (areas prop이 없을 때만)
+        - [x] 로딩 상태 UI 구현 (Skeleton 컴포넌트 사용)
+        - [x] 에러 처리 UI 구현 (에러 메시지 표시 및 기본 지역 목록 사용)
+        - [x] 하위 호환성 유지 (areas prop이 있으면 Client Component에서 로드하지 않음)
+        - [x] 기존 기능 정상 작동 확인 (areas prop 전달 시)
+        - [x] Client Component 로드 기능 정상 작동 확인
+      - ---
   - [x] 관광 타입 상수 정의
     - [x] `lib/constants/content-types.ts` 생성
       - [x] CONTENT_TYPES 배열 정의

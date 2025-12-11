@@ -32,6 +32,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { MapPin, Tag, ArrowUpDown, X, Heart, ChevronDown, Filter } from 'lucide-react';
 import type { AreaCode } from '@/lib/types/tour';
 import { CONTENT_TYPES } from '@/lib/constants/content-types';
+import { DEFAULT_AREAS } from '@/lib/constants/areas';
+import { getAreaCode } from '@/lib/api/tour-api';
 import {
   Select,
   SelectContent,
@@ -48,6 +50,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { getPetSizeLabel } from '@/lib/utils/pet';
 import {
@@ -68,8 +71,8 @@ const PET_SIZES = [
 ] as const;
 
 export interface TourFiltersProps {
-  /** 지역 목록 */
-  areas: AreaCode[];
+  /** 지역 목록 (선택 사항, 없으면 Client Component에서 로드) */
+  areas?: AreaCode[];
   /** 추가 클래스명 */
   className?: string;
 }
@@ -91,13 +94,21 @@ interface ActiveFilter {
 /**
  * 관광지 필터 컴포넌트
  */
-export function TourFilters({ areas, className }: TourFiltersProps) {
+export function TourFilters({ areas: areasProp, className }: TourFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   // 접기/펼치기 상태 관리
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
+  // 지역 목록 로드 상태 관리 (Client Component에서 로드할 때 사용)
+  const [areasState, setAreasState] = useState<AreaCode[]>(areasProp || []);
+  const [isLoadingAreas, setIsLoadingAreas] = useState(false);
+  const [areasError, setAreasError] = useState<Error | null>(null);
+
+  // 지역 목록 (props가 있으면 사용, 없으면 state 사용)
+  const areas = areasProp || areasState;
 
   // 현재 필터 값 읽기 (필터 유틸리티 함수 사용)
   const filterParams = parseFilterParams(searchParams);
@@ -227,6 +238,43 @@ export function TourFilters({ areas, className }: TourFiltersProps) {
 
     updateParams(updates);
   };
+
+  // Client Component에서 지역 목록 로드 (areas prop이 없을 때만)
+  useEffect(() => {
+    // areas prop이 있으면 로드하지 않음
+    if (areasProp && areasProp.length > 0) {
+      return;
+    }
+
+    // 이미 로드된 경우 다시 로드하지 않음
+    if (areasState.length > 0 && !areasError) {
+      return;
+    }
+
+    const loadAreas = async () => {
+      setIsLoadingAreas(true);
+      setAreasError(null);
+
+      try {
+        const loadedAreas = await getAreaCode({ numOfRows: 100 });
+        setAreasState(loadedAreas);
+      } catch (err) {
+        console.error('지역 목록 로드 실패:', err);
+        setAreasError(
+          err instanceof Error
+            ? err
+            : new Error('지역 목록을 불러올 수 없습니다.'),
+        );
+        // 기본 지역 목록 사용
+        setAreasState(DEFAULT_AREAS);
+      } finally {
+        setIsLoadingAreas(false);
+      }
+    };
+
+    loadAreas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 컴포넌트 마운트 시 한 번만 실행
 
   // 모바일/데스크톱 감지
   useEffect(() => {
@@ -392,28 +440,40 @@ export function TourFilters({ areas, className }: TourFiltersProps) {
             <MapPin className="h-4 w-4" aria-hidden="true" />
             지역
           </label>
-          <Select value={currentAreaCode} onValueChange={handleAreaChange}>
-            <SelectTrigger
-              id="area-filter"
-              className={cn(
-                'w-full',
-                currentAreaCode !== '1' &&
-                  'border-primary bg-primary/5 dark:bg-primary/10',
-              )}
-              aria-label="지역 선택"
+          {isLoadingAreas ? (
+            <Skeleton className="h-10 w-full" />
+          ) : areasError && areas.length === 0 ? (
+            <div className="text-sm text-destructive p-2 border rounded-md">
+              지역 목록을 불러올 수 없습니다. 기본 지역만 사용 가능합니다.
+            </div>
+          ) : (
+            <Select
+              value={currentAreaCode}
+              onValueChange={handleAreaChange}
+              disabled={areas.length === 0}
             >
-              <SelectValue placeholder="지역 선택" />
-            </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">전체</SelectItem>
-            {areas.map((area) => (
-              <SelectItem key={area.code} value={area.code}>
-                {area.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+              <SelectTrigger
+                id="area-filter"
+                className={cn(
+                  'w-full',
+                  currentAreaCode !== '1' &&
+                    'border-primary bg-primary/5 dark:bg-primary/10',
+                )}
+                aria-label="지역 선택"
+              >
+                <SelectValue placeholder="지역 선택" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">전체</SelectItem>
+                {areas.map((area) => (
+                  <SelectItem key={area.code} value={area.code}>
+                    {area.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
 
       {/* 관광 타입 필터 */}
       <div className="flex flex-col gap-2 flex-1">
