@@ -37,6 +37,8 @@ export interface TourCardProps {
   tour: TourItem;
   /** 반려동물 정보 (선택 사항) */
   petInfo?: PetTourInfo | null;
+  /** 선택된 상태 (지도-리스트 연동용) */
+  isSelected?: boolean;
   /** 추가 클래스명 */
   className?: string;
 }
@@ -44,7 +46,7 @@ export interface TourCardProps {
 /**
  * 관광지 카드 컴포넌트
  */
-export function TourCard({ tour, petInfo, className }: TourCardProps) {
+export function TourCard({ tour, petInfo, isSelected = false, className }: TourCardProps) {
   const { name: typeName, colorClass } = getContentTypeInfo(tour.contenttypeid);
   const address = formatAddress(tour.addr1, tour.addr2);
   // overview는 상세 정보 API에서만 제공되므로 목록에서는 표시하지 않음
@@ -66,6 +68,9 @@ export function TourCard({ tour, petInfo, className }: TourCardProps) {
         'border border-gray-200 dark:border-gray-700',
         'overflow-hidden',
         'hover:shadow-xl hover:scale-[1.02]',
+        'transition-all duration-200',
+        isSelected &&
+          'ring-2 ring-primary ring-offset-2 shadow-lg scale-[1.02] border-primary',
         'transition-all duration-300',
         'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
         className,

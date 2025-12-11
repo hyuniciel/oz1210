@@ -42,6 +42,8 @@ export interface TourListProps {
   onRetry?: () => void;
   /** 빈 상태 메시지 */
   emptyMessage?: string;
+  /** 선택된 관광지 ID (지도-리스트 연동용) */
+  selectedTourId?: string;
 }
 
 /**
@@ -96,6 +98,7 @@ export function TourList({
   error = null,
   onRetry,
   emptyMessage,
+  selectedTourId,
 }: TourListProps) {
   // 에러 상태
   if (error) {
@@ -124,7 +127,15 @@ export function TourList({
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
       {tours.map((tour) => {
         const petInfo = petInfoMap?.get(tour.contentid) || null;
-        return <TourCard key={tour.contentid} tour={tour} petInfo={petInfo} />;
+        const isSelected = selectedTourId === tour.contentid;
+        return (
+          <TourCard
+            key={tour.contentid}
+            tour={tour}
+            petInfo={petInfo}
+            isSelected={isSelected}
+          />
+        );
       })}
     </div>
   );

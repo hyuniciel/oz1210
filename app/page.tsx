@@ -25,6 +25,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { getAreaCode, getAreaBasedList, searchKeyword, getDetailPetTour } from '@/lib/api/tour-api';
 import { TourList } from '@/components/tour-list';
+import { TourListWithMap } from '@/components/tour-list-with-map';
 import { TourFilters } from '@/components/tour-filters';
 import { sortTours } from '@/lib/utils/sort';
 import { isPetFriendly, matchesPetSizeFilter } from '@/lib/utils/pet';
@@ -33,6 +34,9 @@ import { DEFAULT_AREAS } from '@/lib/constants/areas';
 import type { TourItem, PetTourInfo } from '@/lib/types/tour';
 import { Loading } from '@/components/ui/loading';
 
+// 네이버 지도 컴포넌트 지연 로딩 (SSR 비활성화)
+
+ 
 /**
  * 페이지 메타데이터
  * layout.tsx에 기본 메타데이터가 설정되어 있으므로
@@ -178,48 +182,19 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </div>
 
         {/* 메인 콘텐츠 영역 - 데스크톱: 리스트 + 지도 분할, 모바일: 탭 전환 */}
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-          {/* 관광지 목록 섹션 */}
-          {/* TODO: 향후 tour-list 컴포넌트 배치 */}
-          <div className="flex-1 lg:w-1/2">
-            {/* 검색 키워드 및 결과 개수 표시 (있는 경우) */}
-            {keyword && (
-              <div className="mb-4">
-                <h2 className="text-xl font-semibold">
-                  &quot;{keyword}&quot; 검색 결과: {tours.length}개
-                </h2>
-              </div>
-            )}
-
-            {/* 관광지 목록 컴포넌트 */}
-            <TourList
-              tours={tours}
-              petInfoMap={petInfoMap}
-              error={error}
-              emptyMessage={
-                petFriendly
-                  ? '반려동물 동반 가능한 관광지를 찾을 수 없습니다.'
-                  : keyword
-                    ? `"${keyword}"에 대한 검색 결과가 없습니다.`
-                    : '관광지를 찾을 수 없습니다.'
-              }
-            />
-          </div>
-
-          {/* 네이버 지도 섹션 */}
-          {/* TODO: 향후 naver-map 컴포넌트 배치 */}
-          <div className="hidden lg:block lg:w-1/2">
-            {/* 지도 컴포넌트가 여기에 배치됩니다 */}
-            <div className="sticky top-20 h-[600px] rounded-lg border bg-muted/50 flex items-center justify-center">
-              <div className="text-sm text-muted-foreground">
-                지도 영역 (향후 구현)
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 모바일 지도 탭 (향후 구현) */}
-        {/* TODO: 모바일에서는 탭 형태로 리스트/지도 전환 */}
+        <TourListWithMap
+          tours={tours}
+          petInfoMap={petInfoMap}
+          error={error}
+          emptyMessage={
+            petFriendly
+              ? '반려동물 동반 가능한 관광지를 찾을 수 없습니다.'
+              : keyword
+                ? `"${keyword}"에 대한 검색 결과가 없습니다.`
+                : '관광지를 찾을 수 없습니다.'
+          }
+          keyword={keyword}
+        />
       </div>
     </section>
   );
