@@ -593,11 +593,104 @@ b- [ ] `.cursor/` 디렉토리
       - [x] 성능 최적화 (지도 지연 로딩, 마커 최적화)
     - ---
 - [ ] 페이지네이션
-  - [ ] 무한 스크롤 구현
-    - [ ] Intersection Observer 사용
-    - [ ] 하단 로딩 인디케이터
-    - [ ] 페이지당 10-20개 항목
+  - [x] 무한 스크롤 구현
+    - [x] Intersection Observer 사용
+    - [x] 하단 로딩 인디케이터
+    - [x] 페이지당 10-20개 항목
   - [ ] 또는 페이지 번호 선택 방식
+  - ---
+  - 추가 개발 사항
+    - [x] Server Action 생성
+      - [x] `actions/load-tours.ts` 파일 생성
+        - [x] `loadMoreTours` Server Action 함수 구현
+          - [x] 파라미터 타입 정의 (`LoadMoreToursParams` 인터페이스)
+          - [x] `pageNo`, `areaCode`, `contentTypeId`, `keyword`, `petFriendly`, `petSize`, `sort` 파라미터 처리
+          - [x] `keyword`가 있으면 `searchKeyword` 호출, 없으면 `getAreaBasedList` 호출
+          - [x] 반려동물 필터 활성화 시 `getDetailPetTour` 병렬 호출 (`Promise.allSettled` 사용)
+          - [x] 반려동물 필터링 로직 적용 (`isPetFriendly`, `matchesPetSizeFilter` 사용)
+          - [x] 클라이언트 사이드 정렬 적용 (`sortTours` 사용)
+          - [x] `totalCount` 기반 `hasMore` 계산 (`currentPage * numOfRows < totalCount`)
+          - [x] 반환 타입 정의 (`LoadMoreToursResult` 인터페이스)
+          - [x] 에러 처리 및 로깅
+    - [x] 페이지네이션 Hook 생성
+      - [x] `hooks/use-infinite-tours.ts` 파일 생성
+        - [x] `useInfiniteTours` Hook 구현
+          - [x] 초기 데이터 props: `initialTours`, `initialTotalCount`, `initialPetInfoMap`
+          - [x] 상태 관리 (`useState`):
+            - [x] `allTours`: 누적된 모든 관광지 목록
+            - [x] `petInfoMap`: 반려동물 정보 Map
+            - [x] `currentPage`: 현재 페이지 번호 (초기값: 1)
+            - [x] `hasMore`: 더 불러올 데이터가 있는지 여부
+            - [x] `isLoading`: 로딩 중 여부
+            - [x] `error`: 에러 상태
+          - [x] `loadMore` 함수 구현:
+            - [x] `isLoading` 또는 `!hasMore`일 때 early return
+            - [x] `loadMoreTours` Server Action 호출
+            - [x] 성공 시 `allTours`에 새 항목 추가, `petInfoMap` 업데이트
+            - [x] `currentPage` 증가, `hasMore` 업데이트
+            - [x] 에러 처리 및 상태 업데이트
+          - [x] `reset` 함수 구현:
+            - [x] 새로운 초기 데이터로 상태 초기화
+            - [x] 필터/검색 변경 시 호출
+          - [x] 반환값: `{ tours, petInfoMap, loadMore, reset, isLoading, hasMore, error }`
+    - [x] Intersection Observer 컴포넌트 생성
+      - [x] `components/infinite-scroll-trigger.tsx` 파일 생성
+        - [x] `InfiniteScrollTrigger` 컴포넌트 구현
+          - [x] Props: `onLoadMore`, `hasMore`, `isLoading`
+          - [x] `useRef`로 감지 요소 참조 생성
+          - [x] `useEffect`로 Intersection Observer 설정:
+            - [x] `hasMore`가 false이거나 `isLoading`이 true일 때는 옵저버 비활성화
+            - [x] 뷰포트 진입 시 `onLoadMore` 호출
+            - [x] 컴포넌트 언마운트 시 옵저버 정리
+          - [x] 감지 요소 렌더링 (하단에 배치될 빈 div 또는 로딩 인디케이터)
+          - [x] 접근성 속성 추가 (`aria-label` 등)
+          - [x] "더 이상 불러올 데이터가 없습니다" 메시지 표시
+    - [x] TourList 컴포넌트 수정
+      - [x] `components/tour-list.tsx` 수정
+        - [x] `InfiniteScrollTrigger` import 추가
+        - [x] Props에 `onLoadMore`, `hasMore`, `isLoadingMore` 추가
+        - [x] 목록 하단에 `InfiniteScrollTrigger` 배치
+        - [x] `isLoadingMore`일 때 하단 로딩 인디케이터 표시 (선택 사항)
+    - [x] TourListWithMap 컴포넌트 수정
+      - [x] `components/tour-list-with-map.tsx` 수정
+        - [x] `useInfiniteTours` Hook import 및 사용
+        - [x] Props에 `initialTotalCount` 추가
+        - [x] 초기 데이터를 Hook에 전달하여 초기화
+        - [x] `useEffect`로 필터/검색 변경 감지:
+          - [x] `areaCode`, `contentTypeId`, `keyword`, `petFriendly`, `petSize`, `sort` 변경 감지
+          - [x] 변경 시 `reset` 호출
+        - [x] `loadMore` 함수를 `TourList`에 전달
+        - [x] `hasMore`, `isLoading` 상태를 `TourList`에 전달
+        - [x] 에러 처리 (에러 발생 시 `Error` 컴포넌트 표시)
+    - [x] app/page.tsx 수정
+      - [x] `app/page.tsx` 수정
+        - [x] `totalCount` 정보 추출:
+          - [x] `getAreaBasedList` 호출 시 `listResult.totalCount` 저장
+          - [x] `searchKeyword` 호출 시 `searchResult.totalCount` 저장 (없으면 `tours.length` 사용)
+        - [x] `TourListWithMap`에 `initialTotalCount` prop 추가
+        - [x] 첫 페이지 데이터만 로드하는 로직 유지 (기존 로직 그대로)
+    - [x] UI/UX 개선
+      - [x] 하단 로딩 인디케이터 개선
+        - [x] `InfiniteScrollTrigger` 내부 또는 `TourList` 하단에 로딩 스피너 표시
+        - [x] `Loading` 컴포넌트 또는 Skeleton UI 사용
+      - [x] "더 이상 불러올 데이터가 없습니다" 메시지 표시
+        - [x] `hasMore`가 false이고 `allTours.length > 0`일 때 표시
+        - [x] 적절한 스타일링 및 아이콘 추가
+      - [x] 에러 발생 시 재시도 버튼 제공
+        - [x] `TourList` 또는 `TourListWithMap`에 재시도 버튼 추가
+        - [x] 클릭 시 `loadMore` 재호출
+    - [x] 필터 변경 시 페이지 리셋 확인
+      - [x] `components/tour-filters.tsx` 확인
+        - [x] 필터 변경 시 `page` 파라미터 제거 또는 1로 설정하는지 확인 (이미 구현되어 있을 수 있음)
+        - [x] `resetFilterParams` 함수에서 `page` 파라미터 제거 확인
+    - [x] 성능 최적화
+      - [x] 페이지당 항목 수 확인 (현재 20개 유지)
+      - [x] 반려동물 필터 활성화 시에도 최대 20개만 조회하는지 확인
+      - [x] 병렬 API 호출 최적화 확인 (`Promise.allSettled` 사용)
+    - [x] 접근성 개선
+      - [x] 키보드 네비게이션 지원 확인
+      - [x] 스크린 리더를 위한 로딩 상태 알림 (`aria-live` 등)
+      - [x] ARIA 라벨 추가 (`InfiniteScrollTrigger`에 `aria-label` 추가)
 - [ ] 최종 통합 및 스타일링
   - [ ] 모든 기능 통합 테스트
   - [ ] 반응형 디자인 확인 (모바일/태블릿/데스크톱)

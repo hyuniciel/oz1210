@@ -17,11 +17,12 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { TourList } from '@/components/tour-list';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useInfiniteTours } from '@/hooks/use-infinite-tours';
 import type { TourItem, PetTourInfo } from '@/lib/types/tour';
 
 // 네이버 지도 컴포넌트 지연 로딩
@@ -35,10 +36,12 @@ const NaverMap = dynamic(() => import('@/components/naver-map').then((mod) => ({
 });
 
 interface TourListWithMapProps {
-  /** 관광지 목록 */
+  /** 초기 관광지 목록 */
   tours: TourItem[];
-  /** 반려동물 정보 Map */
+  /** 초기 반려동물 정보 Map */
   petInfoMap?: Map<string, PetTourInfo | null>;
+  /** 초기 전체 개수 */
+  initialTotalCount: number;
   /** 에러 상태 */
   error?: Error | null;
   /** 빈 상태 메시지 */
@@ -51,8 +54,9 @@ interface TourListWithMapProps {
  * 관광지 목록과 지도를 함께 표시하는 컴포넌트
  */
 export function TourListWithMap({
-  tours,
-  petInfoMap,
+  tours: initialTours,
+  petInfoMap: initialPetInfoMap = new Map(),
+  initialTotalCount,
   error,
   emptyMessage,
   keyword,
@@ -61,6 +65,54 @@ export function TourListWithMap({
   const searchParams = useSearchParams();
   const selectedTourId = searchParams.get('selectedTourId') || undefined;
   const [activeTab, setActiveTab] = useState<'list' | 'map'>('list');
+
+  // 무한 스크롤 Hook 사용
+  const {
+    tours,
+    petInfoMap,
+    loadMore,
+    reset,
+    isLoading: isLoadingMore,
+    hasMore,
+    error: loadMoreError,
+  } = useInfiniteTours({
+    initialTours,
+    initialTotalCount,
+    initialPetInfoMap,
+  });
+
+  // 필터/검색 변경 감지하여 초기화
+  useEffect(() => {
+    const areaCode = searchParams.get('areaCode') || '1';
+    const contentTypeId = searchParams.get('contentTypeId') || undefined;
+    const currentKeyword = searchParams.get('keyword') || undefined;
+    const petFriendly = searchParams.get('petFriendly') === 'true';
+    const petSize = searchParams.get('petSize')
+      ? searchParams.get('petSize')!.split(',').filter(Boolean)
+      : undefined;
+    const sort = (searchParams.get('sort') as 'latest' | 'name') || 'latest';
+
+    // 초기 데이터로 리셋 (필터/검색이 변경되었을 때)
+    reset({
+      initialTours,
+      initialTotalCount,
+      initialPetInfoMap,
+    });
+  }, [
+    searchParams.get('areaCode'),
+    searchParams.get('contentTypeId'),
+    searchParams.get('keyword'),
+    searchParams.get('petFriendly'),
+    searchParams.get('petSize'),
+    searchParams.get('sort'),
+    reset,
+    initialTours,
+    initialTotalCount,
+    initialPetInfoMap,
+  ]);
+
+  // 에러 처리 (초기 에러 또는 로드 에러)
+  const displayError = error || loadMoreError;
 
   // 마커 클릭 시 선택된 관광지 ID를 URL에 추가
   const handleMarkerClick = (tourId: string) => {
@@ -101,9 +153,12 @@ export function TourListWithMap({
             <TourList
               tours={tours}
               petInfoMap={petInfoMap}
-              error={error}
+              error={displayError}
               emptyMessage={emptyMessage}
               selectedTourId={selectedTourId}
+              onLoadMore={loadMore}
+              hasMore={hasMore}
+              isLoadingMore={isLoadingMore}
             />
           </TabsContent>
           <TabsContent value="map" className="mt-0">
@@ -134,9 +189,12 @@ export function TourListWithMap({
           <TourList
             tours={tours}
             petInfoMap={petInfoMap}
-            error={error}
+            error={displayError}
             emptyMessage={emptyMessage}
             selectedTourId={selectedTourId}
+            onLoadMore={loadMore}
+            hasMore={hasMore}
+            isLoadingMore={isLoadingMore}
           />
         </div>
 

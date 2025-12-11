@@ -91,6 +91,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   let tours: TourItem[] = [];
   const petInfoMap: Map<string, PetTourInfo | null> = new Map();
   let error: Error | null = null;
+  let totalCount = 0;
 
   try {
     if (keyword) {
@@ -103,6 +104,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         pageNo: page,
       });
       tours = searchResult.items;
+      totalCount = searchResult.totalCount;
     } else {
       // 지역 기반 목록 조회
       const listResult = await getAreaBasedList({
@@ -112,6 +114,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         pageNo: page,
       });
       tours = listResult.items;
+      totalCount = listResult.totalCount;
     }
 
     // 반려동물 필터가 활성화된 경우, 각 관광지에 대해 반려동물 정보 조회
@@ -185,6 +188,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <TourListWithMap
           tours={tours}
           petInfoMap={petInfoMap}
+          initialTotalCount={totalCount}
           error={error}
           emptyMessage={
             petFriendly

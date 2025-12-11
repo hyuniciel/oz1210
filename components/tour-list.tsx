@@ -28,6 +28,7 @@ import type { TourItem, PetTourInfo } from '@/lib/types/tour';
 import { TourCard } from '@/components/tour-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Error } from '@/components/ui/error';
+import { InfiniteScrollTrigger } from '@/components/infinite-scroll-trigger';
 
 export interface TourListProps {
   /** 관광지 목록 */
@@ -44,6 +45,12 @@ export interface TourListProps {
   emptyMessage?: string;
   /** 선택된 관광지 ID (지도-리스트 연동용) */
   selectedTourId?: string;
+  /** 다음 페이지 로드 함수 (무한 스크롤용) */
+  onLoadMore?: () => void | Promise<void>;
+  /** 더 불러올 데이터가 있는지 여부 */
+  hasMore?: boolean;
+  /** 추가 페이지 로딩 중 여부 */
+  isLoadingMore?: boolean;
 }
 
 /**
@@ -99,6 +106,9 @@ export function TourList({
   onRetry,
   emptyMessage,
   selectedTourId,
+  onLoadMore,
+  hasMore = false,
+  isLoadingMore = false,
 }: TourListProps) {
   // 에러 상태
   if (error) {
@@ -124,20 +134,30 @@ export function TourList({
 
   // 목록 표시
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-      {tours.map((tour) => {
-        const petInfo = petInfoMap?.get(tour.contentid) || null;
-        const isSelected = selectedTourId === tour.contentid;
-        return (
-          <TourCard
-            key={tour.contentid}
-            tour={tour}
-            petInfo={petInfo}
-            isSelected={isSelected}
-          />
-        );
-      })}
-    </div>
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+        {tours.map((tour) => {
+          const petInfo = petInfoMap?.get(tour.contentid) || null;
+          const isSelected = selectedTourId === tour.contentid;
+          return (
+            <TourCard
+              key={tour.contentid}
+              tour={tour}
+              petInfo={petInfo}
+              isSelected={isSelected}
+            />
+          );
+        })}
+      </div>
+      {/* 무한 스크롤 트리거 */}
+      {onLoadMore && (
+        <InfiniteScrollTrigger
+          onLoadMore={onLoadMore}
+          hasMore={hasMore}
+          isLoading={isLoadingMore}
+        />
+      )}
+    </>
   );
 }
 
