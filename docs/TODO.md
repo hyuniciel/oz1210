@@ -398,6 +398,39 @@ b- [ ] `.cursor/` 디렉토리
       - [x] getAreaBasedList() 호출 시 필터 파라미터 전달
       - [x] searchKeyword() 호출 시에도 필터 파라미터 전달
       - [x] 정렬은 클라이언트 사이드에서 처리 (API가 정렬을 지원하지 않을 경우)
+  - [x] 필터 전용 로직
+    - [x] `lib/utils/filters.ts` 생성 (필터 전용 유틸리티 함수)
+      - [x] FilterParams 인터페이스 정의
+      - [x] DEFAULT_FILTERS 상수 정의
+      - [x] `parseFilterParams()` 함수 구현 (URL 파라미터 파싱)
+      - [x] `buildFilterParams()` 함수 구현 (FilterParams → URLSearchParams)
+      - [x] `mergeFilterParams()` 함수 구현 (필터 파라미터 병합)
+      - [x] `resetFilterParams()` 함수 구현 (필터 리셋)
+      - [x] `updateFilterParams()` 함수 구현 (필터 파라미터 업데이트)
+      - [x] `buildFilterQueryString()` 함수 구현 (쿼리 문자열 생성)
+    - [x] `components/tour-filters.tsx` 리팩토링
+      - [x] 필터 유틸리티 함수 import 및 사용
+      - [x] `parseFilterParams()` 사용하여 필터 파라미터 읽기
+      - [x] `updateFilterParams()` 사용하여 URL 파라미터 업데이트
+      - [x] `resetFilterParams()` 사용하여 필터 리셋
+      - [x] 필터 변경 핸들러들 필터 유틸리티 함수 사용하도록 수정
+    - [x] `app/page.tsx` 리팩토링
+      - [x] `parseFilterParams()` 사용하여 필터 파라미터 읽기
+      - [x] 필터 기본값을 DEFAULT_FILTERS 상수 사용
+    - ---
+    - 추가 개발 사항
+      - [x] `lib/utils/filters.ts` 파일 생성 및 필터 유틸리티 함수 구현
+      - [x] FilterParams 인터페이스로 필터 파라미터 타입 정의
+      - [x] DEFAULT_FILTERS 상수로 필터 기본값 중앙 관리
+      - [x] `parseFilterParams()` 함수로 URL 파라미터 파싱 로직 통합
+      - [x] `buildFilterParams()` 함수로 FilterParams를 URLSearchParams로 변환
+      - [x] `mergeFilterParams()` 함수로 필터 파라미터 병합 로직 구현
+      - [x] `resetFilterParams()` 함수로 필터 리셋 로직 구현 (keyword 유지)
+      - [x] `updateFilterParams()` 함수로 필터 파라미터 업데이트 로직 구현
+      - [x] `components/tour-filters.tsx`에서 필터 유틸리티 함수 사용하도록 리팩토링
+      - [x] `app/page.tsx`에서 필터 유틸리티 함수 사용하도록 리팩토링
+      - [x] 기존 기능 정상 작동 확인 및 타입 안정성 검증
+    - ---
   - [x] 지역 목록 로드
     - [x] Server Component에서 지역 목록 미리 로드
       - [x] app/page.tsx에서 getAreaCode() 호출

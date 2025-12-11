@@ -50,6 +50,13 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { getPetSizeLabel } from '@/lib/utils/pet';
+import {
+  parseFilterParams,
+  updateFilterParams,
+  resetFilterParams,
+  DEFAULT_FILTERS,
+  type FilterParams,
+} from '@/lib/utils/filters';
 
 /**
  * 반려동물 크기 필터 옵션
@@ -92,15 +99,14 @@ export function TourFilters({ areas, className }: TourFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  // 현재 필터 값 읽기
-  const currentAreaCode = searchParams.get('areaCode') || '1'; // 기본값: 서울
-  const currentContentTypeId = searchParams.get('contentTypeId') || '';
-  const currentSort = searchParams.get('sort') || 'latest';
-  const currentPetFriendly = searchParams.get('petFriendly') === 'true';
-  const currentPetSize = searchParams.get('petSize')
-    ? searchParams.get('petSize')!.split(',')
-    : [];
-  const keyword = searchParams.get('keyword') || '';
+  // 현재 필터 값 읽기 (필터 유틸리티 함수 사용)
+  const filterParams = parseFilterParams(searchParams);
+  const currentAreaCode = filterParams.areaCode || '1'; // 기본값: 서울
+  const currentContentTypeId = filterParams.contentTypeId || '';
+  const currentSort = filterParams.sort || 'latest';
+  const currentPetFriendly = filterParams.petFriendly || false;
+  const currentPetSize = filterParams.petSize || [];
+  const keyword = filterParams.keyword || '';
 
   // 관광 타입 필터 상태 (체크박스용)
   const selectedTypeIds = currentContentTypeId
@@ -195,27 +201,27 @@ export function TourFilters({ areas, className }: TourFiltersProps) {
   const activeFilters = getActiveFilters();
 
   /**
-   * 개별 필터 제거 핸들러
+   * 개별 필터 제거 핸들러 (필터 유틸리티 함수 사용)
    */
   const handleRemoveFilter = (filterKey: string) => {
-    const updates: Record<string, string | null> = {};
+    const updates: Partial<FilterParams> = {};
 
     switch (filterKey) {
       case 'areaCode':
-        updates.areaCode = null; // 기본값으로 리셋
+        updates.areaCode = DEFAULT_FILTERS.areaCode; // 기본값으로 리셋
         break;
       case 'contentTypeId':
-        updates.contentTypeId = null;
+        updates.contentTypeId = undefined;
         break;
       case 'sort':
-        updates.sort = null; // 기본값 'latest'로 리셋
+        updates.sort = DEFAULT_FILTERS.sort; // 기본값 'latest'로 리셋
         break;
       case 'petFriendly':
-        updates.petFriendly = null;
-        updates.petSize = null; // 반려동물 필터 해제 시 크기 필터도 해제
+        updates.petFriendly = false;
+        updates.petSize = undefined; // 반려동물 필터 해제 시 크기 필터도 해제
         break;
       case 'petSize':
-        updates.petSize = null;
+        updates.petSize = undefined;
         break;
     }
 
@@ -247,30 +253,26 @@ export function TourFilters({ areas, className }: TourFiltersProps) {
   }, []);
 
   /**
-   * URL 파라미터 업데이트 함수
+   * URL 파라미터 업데이트 함수 (필터 유틸리티 함수 사용)
    */
-  const updateParams = (updates: Record<string, string | null>) => {
-    const params = new URLSearchParams(searchParams.toString());
-
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value === null || value === '' || value === 'all') {
-        params.delete(key);
-      } else {
-        params.set(key, value);
-      }
-    });
-
+  const updateParams = (updates: Partial<FilterParams>) => {
     // 필터 변경 시 page를 1로 리셋
-    params.delete('page');
+    const updatesWithPageReset = {
+      ...updates,
+      page: DEFAULT_FILTERS.page,
+    };
 
-    router.push(`/?${params.toString()}`);
+    const newParams = updateFilterParams(searchParams, updatesWithPageReset);
+    router.push(`/?${newParams.toString()}`);
   };
 
   /**
    * 지역 필터 변경 핸들러
    */
   const handleAreaChange = (value: string) => {
-    updateParams({ areaCode: value === 'all' ? null : value });
+    updateParams({
+      areaCode: value === 'all' ? DEFAULT_FILTERS.areaCode : value,
+    });
   };
 
   /**
@@ -282,7 +284,7 @@ export function TourFilters({ areas, className }: TourFiltersProps) {
       updateParams({ contentTypeId: typeId });
     } else {
       // 해제: 파라미터 제거
-      updateParams({ contentTypeId: null });
+      updateParams({ contentTypeId: undefined });
     }
   };
 
@@ -295,7 +297,7 @@ export function TourFilters({ areas, className }: TourFiltersProps) {
       updateParams({ contentTypeId: CONTENT_TYPES[0].id });
     } else {
       // 전체 해제
-      updateParams({ contentTypeId: null });
+      updateParams({ contentTypeId: undefined });
     }
   };
 
@@ -311,10 +313,10 @@ export function TourFilters({ areas, className }: TourFiltersProps) {
    */
   const handlePetFriendlyChange = (checked: boolean) => {
     if (checked) {
-      updateParams({ petFriendly: 'true' });
+      updateParams({ petFriendly: true });
     } else {
       // 반려동물 필터 해제 시 크기 필터도 함께 해제
-      updateParams({ petFriendly: null, petSize: null });
+      updateParams({ petFriendly: false, petSize: undefined });
     }
   };
 
@@ -335,19 +337,16 @@ export function TourFilters({ areas, className }: TourFiltersProps) {
 
     // URL 파라미터 업데이트
     updateParams({
-      petSize: newSizes.length > 0 ? newSizes.join(',') : null,
+      petSize: newSizes.length > 0 ? newSizes : undefined,
     });
   };
 
   /**
-   * 필터 리셋 핸들러
+   * 필터 리셋 핸들러 (필터 유틸리티 함수 사용)
    */
   const handleReset = () => {
-    const params = new URLSearchParams();
-    // keyword는 유지
-    if (keyword) {
-      params.set('keyword', keyword);
-    }
+    const resetFilters = resetFilterParams(filterParams);
+    const params = updateFilterParams(new URLSearchParams(), resetFilters);
     router.push(`/?${params.toString()}`);
   };
 

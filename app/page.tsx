@@ -28,6 +28,7 @@ import { TourList } from '@/components/tour-list';
 import { TourFilters } from '@/components/tour-filters';
 import { sortTours } from '@/lib/utils/sort';
 import { isPetFriendly, matchesPetSizeFilter } from '@/lib/utils/pet';
+import { parseFilterParams } from '@/lib/utils/filters';
 import type { TourItem, PetTourInfo } from '@/lib/types/tour';
 import { Loading } from '@/components/ui/loading';
 
@@ -60,13 +61,16 @@ interface HomePageProps {
 export default async function HomePage({ searchParams }: HomePageProps) {
   // URL 쿼리 파라미터 읽기 (Next.js 15에서는 Promise로 받음)
   const params = await searchParams;
-  const keyword = params.keyword;
-  const areaCode = params.areaCode || '1'; // 기본값: 서울
-  const contentTypeId = params.contentTypeId;
-  const sort = params.sort || 'latest'; // 기본값: 최신순
-  const page = params.page ? parseInt(params.page, 10) : 1;
-  const petFriendly = params.petFriendly === 'true'; // 반려동물 필터
-  const petSize = params.petSize ? params.petSize.split(',') : []; // 반려동물 크기 필터
+  
+  // 필터 파라미터 파싱 (필터 유틸리티 함수 사용)
+  const filterParams = parseFilterParams(params);
+  const keyword = filterParams.keyword;
+  const areaCode = filterParams.areaCode || '1'; // 기본값: 서울
+  const contentTypeId = filterParams.contentTypeId;
+  const sort = filterParams.sort || 'latest'; // 기본값: 최신순
+  const page = filterParams.page || 1;
+  const petFriendly = filterParams.petFriendly || false; // 반려동물 필터
+  const petSize = filterParams.petSize || []; // 반려동물 크기 필터
 
   // 지역 목록 로드
   let areas: Awaited<ReturnType<typeof getAreaCode>> = [];
