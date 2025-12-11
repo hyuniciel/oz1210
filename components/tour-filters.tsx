@@ -483,8 +483,19 @@ export function TourFilters({ areas: areasProp, className }: TourFiltersProps) {
         >
           <Tag className="h-4 w-4" aria-hidden="true" />
           관광 타입
+          {selectedTypeIds.length > 0 && (
+            <span className="ml-1 text-xs text-muted-foreground">
+              ({selectedTypeIds.length})
+            </span>
+          )}
         </label>
-        <div className="flex flex-col gap-2 max-h-32 overflow-y-auto border rounded-md p-2">
+        <div
+          className={cn(
+            'flex flex-col gap-2 max-h-32 overflow-y-auto border rounded-md p-2 transition-colors',
+            currentContentTypeId &&
+              'border-primary bg-primary/5 dark:bg-primary/10',
+          )}
+        >
           {/* 전체 선택 체크박스 */}
           <div className="flex items-center gap-2 pb-2 border-b">
             <Checkbox
